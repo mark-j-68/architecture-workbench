@@ -1,0 +1,26 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.architectureworkbench</groupId>
+  <artifactId>architecture-workbench</artifactId>
+  <version>0.3.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>Architecture Workbench</name>
+  <modules>
+    <module>platform-audit</module>
+    <module>workbench-core</module>
+    <module>architecture-knowledge-graph</module>
+    <module>agent-collaboration</module>
+    <module>review-board</module>
+    <module>knowledge-graph-mcp</module>
+    <module>workspace-service</module>
+    <module>discovery-engine</module>
+    <module>architecture-intelligence</module>
+    <module>decision-intelligence</module>
+    <module>architecture-api</module>
+  </modules>
+  <build>
+    <directory>${project.basedir}/target</directory>
+  </build>
+</project>

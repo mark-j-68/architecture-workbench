@@ -1,0 +1,20 @@
+# Java / Maven
+target/
+**/target/
+*.class
+
+# Node / Vite
+node_modules/
+dist/
+**/dist/
+
+# Logs and local runtime files
+*.log
+.env
+.env.*
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

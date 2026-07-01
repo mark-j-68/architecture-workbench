@@ -1,0 +1,173 @@
+metadata:
+  id: mortgage-origination-example
+  name: Mortgage Origination Example
+  version: 0.1.0
+  description: Example model used to prove the canonical ArchitectureModel.
+  owner: Architecture Workbench Team
+
+domain:
+  ubiquitousLanguage:
+    - term: Mortgage Application
+      definition: A request by an applicant or broker for a mortgage product.
+    - term: Affordability Assessment
+      definition: A rules-based decision on whether the applicant can afford the requested loan.
+  boundedContexts:
+    - name: Origination
+      description: Captures and progresses mortgage applications.
+      aggregates:
+        - name: MortgageApplication
+          rootEntity: MortgageApplication
+          description: Owns the lifecycle of an application from draft to submission.
+          invariants:
+            - An application cannot be submitted without applicant identity details.
+            - A submitted application cannot be modified without creating an amendment.
+          valueObjects: [ApplicantName, PropertyAddress, LoanAmount]
+      commands:
+        - name: SubmitMortgageApplication
+          handledByAggregate: MortgageApplication
+          intent: Submit a completed application for assessment.
+      events:
+        - name: MortgageApplicationSubmitted
+          emittedByAggregate: MortgageApplication
+          payload: [applicationId, applicantId, loanAmount]
+      policies:
+        - name: StartAffordabilityAssessment
+          triggerEvent: MortgageApplicationSubmitted
+          condition: Application has all required financial details.
+          issuesCommand: AssessAffordability
+      readModels:
+        - name: ApplicationSummary
+          description: Case tracking view for loan officers.
+          populatedByEvents: [MortgageApplicationSubmitted]
+    - name: Affordability
+      description: Assesses affordability and produces lending recommendations.
+      aggregates:
+        - name: AffordabilityCase
+          rootEntity: AffordabilityCase
+          description: Owns affordability calculation state.
+          invariants:
+            - An affordability case must reference exactly one submitted application.
+          valueObjects: [Income, Outgoings, AffordabilityResult]
+      commands:
+        - name: AssessAffordability
+          handledByAggregate: AffordabilityCase
+          intent: Calculate affordability for a submitted application.
+      events:
+        - name: AffordabilityAssessed
+          emittedByAggregate: AffordabilityCase
+          payload: [applicationId, result, maxLoanAmount]
+      policies: []
+      readModels:
+        - name: AffordabilityResultView
+          description: Result view for underwriting and loan officer users.
+          populatedByEvents: [AffordabilityAssessed]
+
+architecture:
+  services:
+    - name: origination-service
+      type: spring-boot-service
+      ownsAggregates: [MortgageApplication]
+      exposesApis: [POST /applications]
+      publishesEvents: [MortgageApplicationSubmitted]
+      subscribesToEvents: [AffordabilityAssessed]
+    - name: affordability-service
+      type: spring-boot-service
+      ownsAggregates: [AffordabilityCase]
+      exposesApis: []
+      publishesEvents: [AffordabilityAssessed]
+      subscribesToEvents: [MortgageApplicationSubmitted]
+  externalSystems:
+    - name: Broker Portal
+      description: External broker-facing channel that submits applications.
+  integrations:
+    - source: Broker Portal
+      target: origination-service
+      style: rest
+      description: Broker submits mortgage application.
+    - source: origination-service
+      target: affordability-service
+      style: event
+      description: Application submission starts affordability assessment.
+
+deployment:
+  target: localstack
+  region: eu-west-1
+  resources:
+    - name: architecture-workbench-events
+      type: eventbridge-bus
+      ownerService: shared
+    - name: origination-db
+      type: postgres-database
+      ownerService: origination-service
+    - name: affordability-db
+      type: postgres-database
+      ownerService: affordability-service
+
+governance:
+  ai:
+    consensusRequired: true
+    maxConsensusRounds: 3
+    fallback: HUMAN_REVIEW
+    judges:
+      - id: claude-architecture-judge
+        provider: anthropic
+        model: claude-sonnet
+        role: ddd-and-architecture-reviewer
+        enabled: true
+      - id: openai-regulatory-judge
+        provider: openai
+        model: gpt-5.5-thinking
+        role: regulatory-and-security-reviewer
+        enabled: true
+    decisionTypesRequiringConsensus:
+      - DOMAIN_EXTRACTION
+      - ARCHITECTURE_REVIEW
+      - ADR_GENERATION
+      - REGULATORY_RECOMMENDATION
+      - AGENT_INSTRUCTION_GENERATION
+  audit:
+    immutableActivityLogRequired: true
+    appendOnlyStore: S3_OBJECT_LOCK
+    hashChainRequired: true
+    piiAllowedInImmutableEnvelope: false
+    payloadStrategy: ENCRYPTED_EXTERNAL_PAYLOAD_REFERENCE
+    retentionPolicy: REGULATORY_RETENTION_POLICY
+  piiProtection:
+    piiClassificationRequired: true
+    encryptionRequired: true
+    encryptionScope: PER_SUBJECT_OR_CASE
+    cryptographicShreddingRequired: true
+    keyDestructionWorkflow: DELETE_DATA_ENCRYPTION_KEY_OR_DESTROY_WRAPPED_KEY
+    piiCategories:
+      - applicant_identity
+      - contact_details
+      - financial_information
+      - uploaded_documents
+      - prompt_or_response_payloads
+
+
+capture:
+  event_storm_boards:
+    - id: board-pos-001
+      name: POS Event Storm
+      source: tldraw
+      captured_at: 2026-06-28T00:00:00Z
+      stickies:
+        - id: shape-domain-event-001
+          type: DOMAIN_EVENT
+          text: MortgageApplicationSubmitted
+          position: { x: 1200, y: 420 }
+          width: 220
+          height: 120
+          colour: orange
+          provenance: human-authored
+          confidence: 1.0
+        - id: shape-command-001
+          type: COMMAND
+          text: SubmitMortgageApplication
+          position: { x: 920, y: 420 }
+          width: 220
+          height: 120
+          colour: yellow
+          provenance: human-authored
+          confidence: 1.0

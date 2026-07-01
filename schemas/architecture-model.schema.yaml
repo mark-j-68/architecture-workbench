@@ -1,0 +1,192 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: Architecture Workbench Canonical Model
+type: object
+required: [metadata, domain, architecture, deployment, governance]
+properties:
+  metadata:
+    type: object
+    required: [id, name, version]
+    properties:
+      id: { type: string }
+      name: { type: string }
+      version: { type: string }
+      description: { type: string }
+      owner: { type: string }
+  domain:
+    type: object
+    properties:
+      ubiquitousLanguage:
+        type: array
+        items:
+          type: object
+          required: [term, definition]
+          properties:
+            term: { type: string }
+            definition: { type: string }
+      boundedContexts:
+        type: array
+        items:
+          type: object
+          required: [name]
+          properties:
+            name: { type: string }
+            description: { type: string }
+            aggregates:
+              type: array
+              items:
+                type: object
+                required: [name, rootEntity]
+                properties:
+                  name: { type: string }
+                  rootEntity: { type: string }
+                  description: { type: string }
+                  invariants: { type: array, items: { type: string } }
+                  valueObjects: { type: array, items: { type: string } }
+            commands:
+              type: array
+              items:
+                type: object
+                required: [name, handledByAggregate]
+                properties:
+                  name: { type: string }
+                  handledByAggregate: { type: string }
+                  intent: { type: string }
+            events:
+              type: array
+              items:
+                type: object
+                required: [name, emittedByAggregate]
+                properties:
+                  name: { type: string }
+                  emittedByAggregate: { type: string }
+                  payload: { type: array, items: { type: string } }
+            policies:
+              type: array
+              items:
+                type: object
+                properties:
+                  name: { type: string }
+                  triggerEvent: { type: string }
+                  condition: { type: string }
+                  issuesCommand: { type: string }
+            readModels:
+              type: array
+              items:
+                type: object
+                properties:
+                  name: { type: string }
+                  description: { type: string }
+                  populatedByEvents: { type: array, items: { type: string } }
+  architecture:
+    type: object
+    properties:
+      services:
+        type: array
+        items:
+          type: object
+          required: [name]
+          properties:
+            name: { type: string }
+            type: { type: string }
+            ownsAggregates: { type: array, items: { type: string } }
+            exposesApis: { type: array, items: { type: string } }
+            publishesEvents: { type: array, items: { type: string } }
+            subscribesToEvents: { type: array, items: { type: string } }
+      externalSystems:
+        type: array
+        items:
+          type: object
+          properties:
+            name: { type: string }
+            description: { type: string }
+      integrations:
+        type: array
+        items:
+          type: object
+          properties:
+            source: { type: string }
+            target: { type: string }
+            style: { type: string, enum: [rest, event, file, batch, ui] }
+            description: { type: string }
+  deployment:
+    type: object
+    properties:
+      target: { type: string }
+      region: { type: string }
+      resources:
+        type: array
+        items:
+          type: object
+          properties:
+            name: { type: string }
+            type: { type: string }
+            ownerService: { type: string }
+  governance:
+    type: object
+    properties:
+      ai:
+        type: object
+        properties:
+          consensusRequired: { type: boolean }
+          maxConsensusRounds: { type: integer, minimum: 1, maximum: 5 }
+          fallback: { type: string, enum: [HUMAN_REVIEW, REJECT, ACCEPT_WITH_WARNING] }
+          judges:
+            type: array
+            minItems: 2
+            items:
+              type: object
+              required: [id, provider, model, role]
+              properties:
+                id: { type: string }
+                provider: { type: string }
+                model: { type: string }
+                role: { type: string }
+                enabled: { type: boolean }
+          decisionTypesRequiringConsensus:
+            type: array
+            items: { type: string }
+      audit:
+        type: object
+        properties:
+          immutableActivityLogRequired: { type: boolean }
+          appendOnlyStore: { type: string }
+          hashChainRequired: { type: boolean }
+          piiAllowedInImmutableEnvelope: { type: boolean, const: false }
+          payloadStrategy: { type: string }
+          retentionPolicy: { type: string }
+      piiProtection:
+        type: object
+        properties:
+          piiClassificationRequired: { type: boolean }
+          encryptionRequired: { type: boolean }
+          encryptionScope: { type: string }
+          cryptographicShreddingRequired: { type: boolean }
+          keyDestructionWorkflow: { type: string }
+          piiCategories:
+            type: array
+            items: { type: string }
+
+
+# M2.5 capture model extension
+capture:
+  event_storm_boards:
+    type: array
+    items:
+      id: string
+      name: string
+      source: enum[tldraw, image-import, miro-import]
+      captured_at: datetime
+      stickies:
+        type: array
+        items:
+          id: string
+          type: enum[DOMAIN_EVENT, COMMAND, AGGREGATE, POLICY, READ_MODEL, EXTERNAL_SYSTEM, USER_ROLE, HOTSPOT, COMMENT, UNKNOWN]
+          text: string
+          position:
+            x: number
+            y: number
+          width: number
+          height: number
+          colour: string
+          provenance: enum[human-authored, vision-imported, ai-inferred]
+          confidence: number

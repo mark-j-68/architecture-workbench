@@ -1,0 +1,12 @@
+package com.architectureworkbench.audit;
+
+public enum ArchitectureEventSource {
+    WORKSPACE_SERVICE,
+    ARCHITECTURE_KNOWLEDGE_GRAPH,
+    DISCOVERY_SERVICE,
+    HEALTHCHECK_SERVICE,
+    REVIEW_BOARD_SERVICE,
+    AGENT_COLLABORATION,
+    MCP_BOUNDARY,
+    PROVIDER_LAYER
+}

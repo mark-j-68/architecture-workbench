@@ -1,0 +1,203 @@
+meta:
+  name: Architecture Workbench
+  description: >
+    An AI-native architecture platform built around a governed architecture knowledge graph. Design Mode, Discovery Mode, healthchecks, projections, ADRs, and AI reviews are graph-backed workflows.
+  version: 0.3.0
+
+bounded_contexts:
+  - name: Workspace Management
+    description: Manages user workspaces, architecture artefacts, generated files, and repository structure.
+    aggregates:
+      - name: Workspace
+        root_entity: Workspace
+        commands:
+          - CreateWorkspace
+          - ImportWorkspaceArtefact
+          - ExportWorkspace
+        events:
+          - WorkspaceCreated
+          - WorkspaceArtefactImported
+          - WorkspaceExported
+
+  - name: Architecture Knowledge Graph
+    description: Maintains the governed canonical graph of architecture elements, relationships, decisions, risks, reviews, and evidence.
+    aggregates:
+      - name: ArchitectureKnowledgeGraph
+        root_entity: ArchitectureKnowledgeGraph
+        commands:
+          - CreateArchitectureElement
+          - LinkArchitectureElements
+          - RecordDecision
+          - RecordEvidence
+          - TraceDecisionToEvidence
+        events:
+          - ArchitectureElementCreated
+          - ArchitectureElementsLinked
+          - DecisionRecorded
+          - EvidenceRecorded
+          - DecisionTracedToEvidence
+
+  - name: Design Mode
+    description: Supports target architecture design through graph-backed modelling, validation, projections, ADRs, and governed change.
+    aggregates:
+      - name: DesignSession
+        root_entity: DesignSession
+        commands:
+          - StartDesignSession
+          - CaptureEventStormingInput
+          - GenerateDesignProjection
+          - SubmitDesignDecisionForReview
+        events:
+          - DesignSessionStarted
+          - EventStormingInputCaptured
+          - DesignProjectionGenerated
+          - DesignDecisionSubmittedForReview
+
+  - name: Discovery Mode
+    description: Builds existing-system baselines, captures evidence, runs architecture healthchecks, and proposes remediation decisions.
+    aggregates:
+      - name: DiscoveryAssessment
+        root_entity: DiscoveryAssessment
+        commands:
+          - StartDiscoveryAssessment
+          - ImportSystemEvidence
+          - RunArchitectureHealthcheck
+          - RecordHealthcheckRisk
+        events:
+          - DiscoveryAssessmentStarted
+          - SystemEvidenceImported
+          - ArchitectureHealthcheckCompleted
+          - HealthcheckRiskRecorded
+
+  - name: Validation
+    description: Executes deterministic architecture validation rules.
+    aggregates:
+      - name: ValidationRun
+        root_entity: ValidationRun
+        commands:
+          - RunValidation
+        events:
+          - ValidationRunCompleted
+
+  - name: Projection and Generation
+    description: Generates projections and artefacts from the architecture knowledge graph using projection contracts and plugins.
+    aggregates:
+      - name: GenerationRun
+        root_entity: GenerationRun
+        commands:
+          - GenerateProjection
+          - GenerateArtefact
+          - RegenerateArtefacts
+        events:
+          - ProjectionGenerated
+          - ArtefactGenerated
+          - ArtefactsRegenerated
+
+  - name: MCP Agent Collaboration
+    description: Provides controlled MCP tools for graph context, validation, projections, review proposals, and traceability. Agents cannot mutate the graph directly.
+    aggregates:
+      - name: AgentCollaborationSession
+        root_entity: AgentCollaborationSession
+        commands:
+          - OpenAgentCollaborationSession
+          - RecordAgentToolUse
+          - RecordAgentProposal
+          - CloseAgentCollaborationSession
+        events:
+          - AgentCollaborationSessionOpened
+          - AgentToolUseRecorded
+          - AgentProposalRecorded
+          - AgentCollaborationSessionClosed
+
+  - name: AI Architecture Review Board
+    description: Manages review assessments, disagreements, consensus recommendations, ADR drafts, decision outcomes, risks, and evidence links.
+    aggregates:
+      - name: ArchitectureReviewBoardRecord
+        root_entity: ArchitectureReviewBoardRecord
+        commands:
+          - CreateReviewBoardRecord
+          - RecordReviewerAssessment
+          - RecordReviewerDisagreement
+          - RecordConsensusRecommendation
+          - AcceptReviewDecision
+          - RejectReviewDecision
+        events:
+          - ReviewBoardRecordCreated
+          - ReviewerAssessmentRecorded
+          - ReviewerDisagreementRecorded
+          - ConsensusRecommendationRecorded
+          - ReviewDecisionAccepted
+          - ReviewDecisionRejected
+
+policies:
+  - name: ValidateModelAfterChange
+    trigger: ArchitectureElementsLinked
+    issues_command: RunValidation
+
+  - name: RegenerateImpactedArtefacts
+    trigger: ArchitectureElementsLinked
+    issues_command: RegenerateArtefacts
+
+  - name: ProposeADRAfterMajorDecision
+    trigger: ReviewDecisionAccepted
+    issues_command: GenerateArtefact
+
+  - name: RunHealthchecksAfterDiscoveryEvidenceImport
+    trigger: SystemEvidenceImported
+    issues_command: RunArchitectureHealthcheck
+
+read_models:
+  - name: WorkspaceExplorer
+    populated_by:
+      - WorkspaceCreated
+      - WorkspaceArtefactImported
+      - ArtefactGenerated
+
+  - name: ValidationDashboard
+    populated_by:
+      - ValidationRunCompleted
+
+  - name: ArchitectureReviewDashboard
+    populated_by:
+      - ReviewBoardRecordCreated
+      - ReviewerAssessmentRecorded
+      - ConsensusRecommendationRecorded
+      - ReviewDecisionAccepted
+      - ReviewDecisionRejected
+
+  - name: ArchitectureKnowledgeGraphExplorer
+    populated_by:
+      - ArchitectureElementCreated
+      - ArchitectureElementsLinked
+      - DecisionTracedToEvidence
+
+  - name: DiscoveryHealthcheckDashboard
+    populated_by:
+      - ArchitectureHealthcheckCompleted
+      - HealthcheckRiskRecorded
+
+services:
+  - name: workbench-api
+    owns_contexts:
+      - Workspace Management
+      - Architecture Knowledge Graph
+      - Design Mode
+      - Discovery Mode
+      - Validation
+      - Projection and Generation
+      - MCP Agent Collaboration
+      - AI Architecture Review Board
+
+  - name: workbench-ui
+    owns_contexts: []
+    description: React UI for interacting with the Architecture Workbench.
+
+external_systems:
+  - name: AI Provider
+    description: Claude, OpenAI, and Codex providers later. M3 defines collaboration boundaries but does not call providers.
+
+  - name: Git Provider
+    description: GitLab initially; GitHub later.
+
+  - name: LocalStack
+    description: Local AWS-compatible deployment target.
