@@ -50,6 +50,7 @@ import com.architectureworkbench.reviewboard.ReviewBoardWorkflowService;
 import com.architectureworkbench.workspace.Workspace;
 import com.architectureworkbench.workspace.WorkspaceId;
 import com.architectureworkbench.workspace.WorkspaceMetadata;
+import com.architectureworkbench.workspace.ProposedChangeRepository;
 import com.architectureworkbench.workspace.WorkspaceService;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -65,6 +66,8 @@ class ArchitectureKernelApiFacade {
     private final DiscoveryService discoveryService;
     private final ReviewBoardWorkflowService reviewBoardWorkflowService;
     private final ProposedChangeService proposedChangeService;
+    private final ProposedChangeRepository proposedChangeRepository;
+    private final ReviewBoardSessionStore reviewBoardSessionStore;
     private final ProjectionService projectionService;
     private final Map<String, DiscoveryRun> discoveryRuns = new ConcurrentHashMap<>();
     private final Map<String, Recommendation> recommendations = new ConcurrentHashMap<>();
@@ -77,12 +80,16 @@ class ArchitectureKernelApiFacade {
             DiscoveryService discoveryService,
             ReviewBoardWorkflowService reviewBoardWorkflowService,
             ProposedChangeService proposedChangeService,
+            ProposedChangeRepository proposedChangeRepository,
+            ReviewBoardSessionStore reviewBoardSessionStore,
             ProjectionService projectionService
     ) {
         this.workspaceService = workspaceService;
         this.discoveryService = discoveryService;
         this.reviewBoardWorkflowService = reviewBoardWorkflowService;
         this.proposedChangeService = proposedChangeService;
+        this.proposedChangeRepository = proposedChangeRepository;
+        this.reviewBoardSessionStore = reviewBoardSessionStore;
         this.projectionService = projectionService;
     }
 
@@ -118,7 +125,10 @@ class ArchitectureKernelApiFacade {
         ));
         discoveryRuns.put(run.runId().value(), run);
         run.recommendations().forEach(recommendation -> recommendations.put(recommendation.id(), recommendation));
-        run.proposedChanges().forEach(change -> proposedChanges.put(change.id().value(), change));
+        run.proposedChanges().forEach(change -> {
+            proposedChanges.put(change.id().value(), change);
+            proposedChangeRepository.save(change);
+        });
         return discoveryRunResponse(workspaceId, graph.graphId(), run);
     }
 
@@ -162,7 +172,7 @@ class ArchitectureKernelApiFacade {
             ));
         }
         reviewBoardSessions.put(session.sessionId().value(), session);
-        return reviewBoardSessionResponse(session);
+        return persistReviewBoardSession(WorkspaceId.of(workspaceId), session);
     }
 
     ReviewBoardSessionResponse recordReviewBoardVote(String sessionId, RecordReviewBoardVoteRequest request) {
@@ -175,25 +185,28 @@ class ArchitectureKernelApiFacade {
                 null
         ));
         reviewBoardSessions.put(session.sessionId().value(), session);
-        return reviewBoardSessionResponse(session);
+        return persistReviewBoardSession(workspaceIdForSession(session), session);
     }
 
     ReviewBoardSessionResponse closeReviewBoardSession(String sessionId, CloseReviewBoardSessionRequest request) {
         ReviewBoardSession session = reviewBoardWorkflowService.closeSession(session(sessionId), actor(request.actorRef()));
         reviewBoardSessions.put(session.sessionId().value(), session);
-        return reviewBoardSessionResponse(session);
+        return persistReviewBoardSession(workspaceIdForSession(session), session);
     }
 
     ProposedChangeResponse acceptProposedChange(String proposedChangeId, DecideProposedChangeRequest request) {
         ProposedArchitectureChange change = proposedChange(proposedChangeId);
         WorkspaceId workspaceId = workspaceIdForChange(change, request.workspaceId());
+        ArchitectureKnowledgeGraph graph = workspaceService.getWorkspaceGraph(workspaceId);
         ProposedArchitectureChange accepted = proposedChangeService.acceptProposedChange(
-                workspaceService.getWorkspaceGraph(workspaceId),
+                graph,
                 change,
                 actor(request.actorRef()),
                 request.rationale()
         );
         proposedChanges.put(accepted.id().value(), accepted);
+        proposedChangeRepository.save(accepted);
+        workspaceService.saveWorkspaceGraph(workspaceId, graph, actor(request.actorRef()));
         return proposedChangeResponse(accepted);
     }
 
@@ -203,6 +216,7 @@ class ArchitectureKernelApiFacade {
                 request.rationale()
         );
         proposedChanges.put(rejected.id().value(), rejected);
+        proposedChangeRepository.save(rejected);
         return proposedChangeResponse(rejected);
     }
 
@@ -212,6 +226,7 @@ class ArchitectureKernelApiFacade {
                 request.rationale()
         );
         proposedChanges.put(deferred.id().value(), deferred);
+        proposedChangeRepository.save(deferred);
         return proposedChangeResponse(deferred);
     }
 
@@ -255,7 +270,9 @@ class ArchitectureKernelApiFacade {
     private ProposedArchitectureChange proposedChange(String proposedChangeId) {
         ProposedArchitectureChange change = proposedChanges.get(proposedChangeId);
         if (change == null) {
-            throw new IllegalArgumentException("Proposed change does not exist: " + proposedChangeId);
+            change = proposedChangeRepository.findById(proposedChangeId)
+                    .orElseThrow(() -> new IllegalArgumentException("Proposed change does not exist: " + proposedChangeId));
+            proposedChanges.put(change.id().value(), change);
         }
         return change;
     }
@@ -277,6 +294,14 @@ class ArchitectureKernelApiFacade {
             throw new IllegalArgumentException("Workspace id is required for proposed change: " + change.id().value());
         }
         return workspaceId;
+    }
+
+    private WorkspaceId workspaceIdForSession(ReviewBoardSession session) {
+        return workspaceIdsByGraphId.getOrDefault(session.workspaceId(), WorkspaceId.of(session.workspaceId()));
+    }
+
+    private ReviewBoardSessionResponse persistReviewBoardSession(WorkspaceId workspaceId, ReviewBoardSession session) {
+        return reviewBoardSessionStore.save(workspaceId, reviewBoardSessionResponse(session));
     }
 
     private void requireGraphMatchesWorkspace(String workspaceId, DiscoveryRun run) {

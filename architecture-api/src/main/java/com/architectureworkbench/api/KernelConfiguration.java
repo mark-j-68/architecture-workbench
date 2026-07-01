@@ -1,6 +1,6 @@
 package com.architectureworkbench.api;
 
-import com.architectureworkbench.audit.InMemoryAuditSink;
+import com.architectureworkbench.audit.AuditSink;
 import com.architectureworkbench.discovery.DiscoveryGraphMapper;
 import com.architectureworkbench.discovery.DiscoveryService;
 import com.architectureworkbench.discovery.HealthcheckService;
@@ -11,18 +11,34 @@ import com.architectureworkbench.knowledgegraph.ProjectionService;
 import com.architectureworkbench.knowledgegraph.ProposedChangeService;
 import com.architectureworkbench.knowledgegraph.RelationshipService;
 import com.architectureworkbench.reviewboard.ReviewBoardWorkflowService;
+import com.architectureworkbench.workspace.ArchitectureGraphRepository;
+import com.architectureworkbench.workspace.FileArchitectureGraphRepository;
+import com.architectureworkbench.workspace.FileAuditSink;
+import com.architectureworkbench.workspace.FileProposedChangeRepository;
+import com.architectureworkbench.workspace.FileWorkspaceRepository;
+import com.architectureworkbench.workspace.FileWorkspaceStorage;
+import com.architectureworkbench.workspace.InMemoryProposedChangeRepository;
 import com.architectureworkbench.workspace.InMemoryArchitectureGraphRepository;
 import com.architectureworkbench.workspace.InMemoryWorkspaceRepository;
+import com.architectureworkbench.workspace.ProposedChangeRepository;
+import com.architectureworkbench.workspace.WorkspaceRepository;
 import com.architectureworkbench.workspace.WorkspaceService;
+import java.nio.file.Path;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.env.Environment;
 
 @Configuration
 class KernelConfiguration {
     @Bean
-    InMemoryAuditSink kernelAuditSink() {
-        return new InMemoryAuditSink();
+    @Primary
+    AuditSink kernelAuditSink(Environment environment) {
+        if (inMemory(environment)) {
+            return new com.architectureworkbench.audit.InMemoryAuditSink();
+        }
+        return new FileAuditSink(storageRoot(environment));
     }
 
     @Bean
@@ -46,18 +62,34 @@ class KernelConfiguration {
     }
 
     @Bean
-    WorkspaceService workspaceService(InMemoryAuditSink kernelAuditSink) {
-        return new WorkspaceService(
-                new InMemoryWorkspaceRepository(),
-                new InMemoryArchitectureGraphRepository(),
-                kernelAuditSink
-        );
+    WorkspaceRepository workspaceRepository(Environment environment) {
+        return inMemory(environment) ? new InMemoryWorkspaceRepository() : new FileWorkspaceRepository(storageRoot(environment));
+    }
+
+    @Bean
+    ArchitectureGraphRepository architectureGraphRepository(Environment environment) {
+        return inMemory(environment) ? new InMemoryArchitectureGraphRepository() : new FileArchitectureGraphRepository(storageRoot(environment));
+    }
+
+    @Bean
+    ProposedChangeRepository proposedChangeRepository(Environment environment) {
+        return inMemory(environment) ? new InMemoryProposedChangeRepository() : new FileProposedChangeRepository(storageRoot(environment));
+    }
+
+    @Bean
+    ReviewBoardSessionStore reviewBoardSessionStore(Environment environment) {
+        return inMemory(environment) ? new InMemoryReviewBoardSessionStore() : new FileReviewBoardSessionStore(storageRoot(environment));
+    }
+
+    @Bean
+    WorkspaceService workspaceService(WorkspaceRepository workspaceRepository, ArchitectureGraphRepository graphRepository, AuditSink kernelAuditSink) {
+        return new WorkspaceService(workspaceRepository, graphRepository, kernelAuditSink);
     }
 
     @Bean
     DiscoveryService discoveryService(
             ArchitectureElementService elementService,
-            InMemoryAuditSink kernelAuditSink,
+            AuditSink kernelAuditSink,
             ProposedChangeService proposedChangeService
     ) {
         return new DiscoveryService(
@@ -70,12 +102,21 @@ class KernelConfiguration {
     }
 
     @Bean
-    ReviewBoardWorkflowService reviewBoardWorkflowService(InMemoryAuditSink kernelAuditSink) {
+    ReviewBoardWorkflowService reviewBoardWorkflowService(AuditSink kernelAuditSink) {
         return new ReviewBoardWorkflowService(kernelAuditSink);
     }
 
     @Bean
     ProjectionService projectionService(ImmutableKnowledgeGraphAuditLog graphAuditLog) {
         return new ProjectionService(graphAuditLog);
+    }
+
+    private static boolean inMemory(Environment environment) {
+        return "in-memory".equalsIgnoreCase(environment.getProperty("architecture.workbench.persistence", "file"));
+    }
+
+    private static Path storageRoot(Environment environment) {
+        String configured = environment.getProperty(FileWorkspaceStorage.STORAGE_DIR_PROPERTY);
+        return configured == null || configured.isBlank() ? FileWorkspaceStorage.defaultRoot() : Path.of(configured);
     }
 }

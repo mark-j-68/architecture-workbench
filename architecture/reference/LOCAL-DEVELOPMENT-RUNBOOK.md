@@ -99,6 +99,51 @@ Expected response shape:
 }
 ```
 
+## Local Persistence
+
+The API uses file-backed workspace storage by default for local runs.
+
+Default storage directory:
+
+```text
+./data/workspaces
+```
+
+Stored JSON files are grouped by workspace:
+
+```text
+data/workspaces/{workspaceId}/workspace.json
+data/workspaces/{workspaceId}/graph.json
+data/workspaces/{workspaceId}/review-board-sessions.json
+```
+
+Proposed changes and audit records are also written as JSON. Where existing
+kernel workflows still identify a graph as the event workspace boundary, those
+records may appear under a graph-scoped directory until the workspace/graph id
+alignment is tightened.
+
+Override the storage location with an environment variable:
+
+```bash
+ARCHITECTURE_WORKBENCH_STORAGE_DIR=/tmp/architecture-workbench-data
+```
+
+or a Spring/system property:
+
+```bash
+mvn -pl architecture-api org.springframework.boot:spring-boot-maven-plugin:3.2.3:run \
+  -Dspring-boot.run.mainClass=com.architectureworkbench.api.ArchitectureApiApplication \
+  -Dspring-boot.run.arguments=--architecture.workbench.storage.dir=/tmp/architecture-workbench-data
+```
+
+Use in-memory adapters for test-like local runs:
+
+```bash
+mvn -pl architecture-api org.springframework.boot:spring-boot-maven-plugin:3.2.3:run \
+  -Dspring-boot.run.mainClass=com.architectureworkbench.api.ArchitectureApiApplication \
+  -Dspring-boot.run.arguments=--architecture.workbench.persistence=in-memory
+```
+
 ## Running The Frontend
 
 In a second terminal:
@@ -207,8 +252,11 @@ static analysis.
 
 ## Development Boundaries
 
-Local development currently uses in-memory state. Restarting the backend loses
-workspaces, discovery runs, review sessions, and proposed changes.
+Local development now keeps workspace metadata, graph snapshots, proposed
+changes, review-board session snapshots, and audit/event records in local JSON
+files by default. Discovery runs and recommendation candidates are still
+request-time workflow state unless they have been converted into proposed
+changes or graph mutations.
 
 Do not add business rules to the API or UI shells. Kernel semantics belong in
 the kernel and service modules.

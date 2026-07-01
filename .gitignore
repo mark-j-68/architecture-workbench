@@ -12,6 +12,7 @@ dist/
 *.log
 .env
 .env.*
+/data/
 
 # IDE / OS
 .idea/

@@ -9,8 +9,8 @@ The current local stack is intentionally minimal:
 
 - Spring Boot API shell over the Architecture OS kernel
 - React/Vite web UI shell
-- in-memory repositories only
-- no persistence
+- file-backed local workspace storage by default
+- no database persistence
 - no live AI providers
 - no authentication or authorization yet
 - no event sourcing
@@ -23,7 +23,7 @@ The current local stack is intentionally minimal:
 - `architecture-intelligence`: evidence, observations, findings, recommendations, and decisions
 - `discovery-engine`: local repository discovery and healthcheck foundation
 - `review-board`: governed Review Board workflow
-- `workspace-service`: in-memory workspace and graph repository boundary
+- `workspace-service`: workspace, graph, proposed-change, and local JSON persistence adapters
 - `platform-audit`: typed architecture events and immutable audit sink
 - `architecture/reference`: reference architecture, runbooks, workflow docs, and gap analyses
 - `architecture/adr`: architecture decision records
@@ -78,6 +78,32 @@ Health endpoint:
 curl http://localhost:8080/api/health
 ```
 
+By default, local workspace state is stored under:
+
+```text
+./data/workspaces
+```
+
+Override it with either:
+
+```bash
+ARCHITECTURE_WORKBENCH_STORAGE_DIR=/path/to/workspaces
+```
+
+or:
+
+```bash
+mvn -pl architecture-api org.springframework.boot:spring-boot-maven-plugin:3.2.3:run \
+  -Dspring-boot.run.mainClass=com.architectureworkbench.api.ArchitectureApiApplication \
+  -Dspring-boot.run.arguments=--architecture.workbench.storage.dir=/path/to/workspaces
+```
+
+Use in-memory adapters explicitly with:
+
+```bash
+--architecture.workbench.persistence=in-memory
+```
+
 ## Run Frontend
 
 In a second terminal:
@@ -125,10 +151,15 @@ walkthrough.
   `workbench-ui`.
 - If port `8080` or `5173` is already in use, stop the conflicting process or
   run the service on another port.
+- If local state looks stale, inspect or remove `./data/workspaces`.
+- If local JSON state appears corrupt, see the manifest and backup behaviour in
+  the persistence integrity guide.
 
 ## More Detail
 
 - [LOCAL-DEVELOPMENT-RUNBOOK.md](architecture/reference/LOCAL-DEVELOPMENT-RUNBOOK.md)
+- [FILE-BASED-PERSISTENCE.md](architecture/reference/FILE-BASED-PERSISTENCE.md)
+- [PERSISTENCE-INTEGRITY-AND-RECOVERY.md](architecture/reference/PERSISTENCE-INTEGRITY-AND-RECOVERY.md)
 - [MINIMAL-UI-WORKFLOW.md](architecture/reference/MINIMAL-UI-WORKFLOW.md)
 - [ARCHITECTURE-INTELLIGENCE-WORKFLOW.md](architecture/reference/ARCHITECTURE-INTELLIGENCE-WORKFLOW.md)
 - [PLATFORM-CONSTITUTION.md](PLATFORM-CONSTITUTION.md)
