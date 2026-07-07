@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,6 +26,14 @@ public class LocalRepositoryDiscoveryConnector implements DiscoveryConnector {
         }
         List<DiscoveredArtifact> artifacts = new ArrayList<>();
         Set<String> javaPackages = new HashSet<>();
+        DiscoveryExecutionContext executionContext = DiscoveryExecutionContext.from(context);
+        DiscoveryPluginResult repositoryResult = new RepositoryDiscoveryPlugin().discover(DiscoveryInput.root(context.rootDirectory()), executionContext);
+        DiscoveryPluginResult mavenResult = new MavenDiscoveryPlugin().discover(
+                DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(List.of(repositoryResult.output())),
+                executionContext
+        );
+        artifacts.addAll(toArtifacts(repositoryResult));
+        artifacts.addAll(toArtifacts(mavenResult));
 
         try (Stream<Path> stream = Files.walk(context.rootDirectory())) {
             stream.filter(Files::isRegularFile).forEach(path -> inspectFile(context.rootDirectory(), path, artifacts, javaPackages));
@@ -40,7 +49,73 @@ public class LocalRepositoryDiscoveryConnector implements DiscoveryConnector {
                 packageName,
                 Map.of("source", "java-package")
         )));
-        return new DiscoveryResult(context.runId(), context.source(), artifacts);
+        return new DiscoveryResult(context.runId(), context.source(), deduplicate(artifacts));
+    }
+
+    private static List<DiscoveredArtifact> toArtifacts(DiscoveryPluginResult result) {
+        if (result.status() == DiscoveryPluginStatus.FAILED) {
+            return List.of();
+        }
+        List<DiscoveredArtifact> artifacts = new ArrayList<>();
+        for (DiscoveryEvidence evidence : result.output().evidence()) {
+            switch (evidence.evidenceType()) {
+                case "build-file" -> {
+                    if (evidence.references().stream().anyMatch(reference -> reference.endsWith("pom.xml"))) {
+                        artifacts.add(artifact(DiscoveredArtifactType.POM_FILE, evidence));
+                    }
+                }
+                case "build-module-declaration" -> artifacts.add(new DiscoveredArtifact(
+                        null,
+                        DiscoveredArtifactType.MAVEN_MODULE,
+                        evidence.attributes().getOrDefault("module", evidence.identity()),
+                        evidence.attributes().getOrDefault("module", evidence.identity()),
+                        metadata(evidence)
+                ));
+                case "file" -> {
+                    String fileName = evidence.attributes().getOrDefault("fileName", evidence.identity());
+                    if (fileName.equalsIgnoreCase("README.md") || fileName.equalsIgnoreCase("README")) {
+                        artifacts.add(artifact(DiscoveredArtifactType.README_DOC, evidence));
+                    } else if (fileName.equals("Dockerfile") || fileName.startsWith("Dockerfile.") || fileName.startsWith("docker-compose")) {
+                        artifacts.add(artifact(DiscoveredArtifactType.DOCKER_FILE, evidence));
+                    }
+                }
+                case "directory" -> {
+                    String identity = evidence.identity().toLowerCase();
+                    if (identity.equals("adr") || identity.endsWith("/adr") || identity.contains("/architecture/adr")) {
+                        artifacts.add(artifact(DiscoveredArtifactType.ADR_DIRECTORY, evidence));
+                    } else if (identity.endsWith("src/test") || identity.endsWith("src/test/java")) {
+                        artifacts.add(artifact(DiscoveredArtifactType.TEST_DIRECTORY, evidence));
+                    }
+                }
+                default -> {
+                    // Other plugin evidence is retained through plugin APIs; legacy artifacts only cover existing DTO types.
+                }
+            }
+        }
+        return artifacts;
+    }
+
+    private static DiscoveredArtifact artifact(DiscoveredArtifactType type, DiscoveryEvidence evidence) {
+        String path = evidence.references().isEmpty() ? evidence.identity() : evidence.references().get(0);
+        String name = path.contains("/") ? path.substring(path.lastIndexOf('/') + 1) : path;
+        return new DiscoveredArtifact(null, type, path, name, metadata(evidence));
+    }
+
+    private static Map<String, String> metadata(DiscoveryEvidence evidence) {
+        Map<String, String> metadata = new LinkedHashMap<>(evidence.attributes());
+        metadata.put("pluginId", evidence.source());
+        metadata.put("provenance", evidence.provenance());
+        metadata.put("confidence", Double.toString(evidence.confidence().value()));
+        metadata.put("confidenceRationale", evidence.confidence().rationale());
+        return Map.copyOf(metadata);
+    }
+
+    private static List<DiscoveredArtifact> deduplicate(List<DiscoveredArtifact> artifacts) {
+        Map<String, DiscoveredArtifact> unique = new LinkedHashMap<>();
+        for (DiscoveredArtifact artifact : artifacts) {
+            unique.putIfAbsent(artifact.type() + "|" + artifact.path() + "|" + artifact.name(), artifact);
+        }
+        return List.copyOf(unique.values());
     }
 
     private static void inspectFile(Path root, Path path, List<DiscoveredArtifact> artifacts, Set<String> javaPackages) {

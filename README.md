@@ -28,6 +28,27 @@ The current local stack is intentionally minimal:
 - `architecture/reference`: reference architecture, runbooks, workflow docs, and gap analyses
 - `architecture/adr`: architecture decision records
 
+## Roadmap
+
+- `v0.1 Foundation`: Architecture OS kernel, canonical graph, AIM, proposed
+  changes, Review Board workflow, thin API/UI shells, and local persistence.
+- `v0.2 Discovery Foundations`: pluggable deterministic discovery, evidence
+  collection, provenance, confidence, and structural observations.
+- `v0.3 Multi-Repo Product Architecture Intelligence`: product-centric
+  interpretation across repositories, deployables, bounded contexts, release
+  streams, contracts, ownership, and distributed monolith risk.
+- `v0.4 AI Review Board`: provider-neutral reviewer plugins, live model
+  adapters, consensus workflows, and governed AI-assisted review.
+- `v0.5 Continuous Architecture`: repository and pipeline integration,
+  recurring healthchecks, drift detection, and architecture change monitoring.
+- `v0.6 Provider Ecosystem`: extensible provider marketplace for AI models,
+  scanners, generators, projections, and enterprise integrations.
+- `v0.7 Enterprise Portfolio Intelligence`: portfolio-level product comparison,
+  investment signals, duplicate capability detection, and enterprise risk.
+- `v1.0 Architecture Intelligence Platform`: governed architecture operating
+  system for discovery, design, review, generation, portfolio intelligence, and
+  provider ecosystems.
+
 ## Prerequisites
 
 - Java 21
@@ -158,6 +179,10 @@ walkthrough.
 ## More Detail
 
 - [LOCAL-DEVELOPMENT-RUNBOOK.md](architecture/reference/LOCAL-DEVELOPMENT-RUNBOOK.md)
+- [RELEASE-0.2-DISCOVERY-ENGINE.md](architecture/reference/RELEASE-0.2-DISCOVERY-ENGINE.md)
+- [DISCOVERY-PIPELINE.md](architecture/reference/DISCOVERY-PIPELINE.md)
+- [DISCOVERY-PLUGIN-MODEL.md](architecture/reference/DISCOVERY-PLUGIN-MODEL.md)
+- [RELEASE-0.3-MULTI-REPO-PRODUCT-ARCHITECTURE.md](architecture/reference/RELEASE-0.3-MULTI-REPO-PRODUCT-ARCHITECTURE.md)
 - [FILE-BASED-PERSISTENCE.md](architecture/reference/FILE-BASED-PERSISTENCE.md)
 - [PERSISTENCE-INTEGRITY-AND-RECOVERY.md](architecture/reference/PERSISTENCE-INTEGRITY-AND-RECOVERY.md)
 - [MINIMAL-UI-WORKFLOW.md](architecture/reference/MINIMAL-UI-WORKFLOW.md)
