@@ -4,11 +4,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Element;
@@ -25,30 +23,78 @@ public class LocalRepositoryDiscoveryConnector implements DiscoveryConnector {
             throw new IllegalArgumentException("Discovery root is not a directory: " + context.rootDirectory());
         }
         List<DiscoveredArtifact> artifacts = new ArrayList<>();
-        Set<String> javaPackages = new HashSet<>();
         DiscoveryExecutionContext executionContext = DiscoveryExecutionContext.from(context);
         DiscoveryPluginResult repositoryResult = new RepositoryDiscoveryPlugin().discover(DiscoveryInput.root(context.rootDirectory()), executionContext);
         DiscoveryPluginResult mavenResult = new MavenDiscoveryPlugin().discover(
                 DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(List.of(repositoryResult.output())),
                 executionContext
         );
-        artifacts.addAll(toArtifacts(repositoryResult));
-        artifacts.addAll(toArtifacts(mavenResult));
+        DiscoveryPluginResult javaResult = new JavaStructureDiscoveryPlugin().discover(
+                DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(List.of(repositoryResult.output(), mavenResult.output())),
+                executionContext
+        );
+        DiscoveryPluginResult packageDependencyResult = new PackageDependencyDiscoveryPlugin().discover(
+                DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(List.of(repositoryResult.output(), mavenResult.output(), javaResult.output())),
+                executionContext
+        );
+        List<DiscoveryOutput> foundationalOutputs = List.of(repositoryResult.output(), mavenResult.output(), javaResult.output(), packageDependencyResult.output());
+        List<DiscoveryPluginResult> springResults = List.of(
+                new SpringApplicationDiscoveryPlugin().discover(DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(foundationalOutputs), executionContext),
+                new SpringWebDiscoveryPlugin().discover(DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(foundationalOutputs), executionContext),
+                new SpringComponentDiscoveryPlugin().discover(DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(foundationalOutputs), executionContext),
+                new SpringDataDiscoveryPlugin().discover(DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(foundationalOutputs), executionContext),
+                new SpringTransactionDiscoveryPlugin().discover(DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(foundationalOutputs), executionContext),
+                new SpringMessagingDiscoveryPlugin().discover(DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(foundationalOutputs), executionContext)
+        );
+        List<DiscoveryOutput> frameworkOutputs = new ArrayList<>(foundationalOutputs);
+        frameworkOutputs.addAll(springResults.stream().map(DiscoveryPluginResult::output).toList());
+        DiscoveryPluginResult openApiResult = new OpenApiContractDiscoveryPlugin().discover(
+                DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(frameworkOutputs), executionContext);
+        DiscoveryPluginResult eventResult = new EventContractDiscoveryPlugin().discover(
+                DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(frameworkOutputs), executionContext);
+        DiscoveryPluginResult commandResult = new CommandContractDiscoveryPlugin().discover(
+                DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(frameworkOutputs), executionContext);
+        List<DiscoveryOutput> contractOutputs = new ArrayList<>(frameworkOutputs);
+        contractOutputs.addAll(List.of(openApiResult.output(), eventResult.output(), commandResult.output()));
+        DiscoveryPluginResult topologyResult = new MessagingTopologyDiscoveryPlugin().discover(
+                DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(contractOutputs), executionContext);
+        DiscoveryPluginResult versionResult = new ContractVersionDiscoveryPlugin().discover(
+                DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(contractOutputs), executionContext);
+        DiscoveryPluginResult ownershipResult = new ContractOwnershipEvidencePlugin().discover(
+                DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(contractOutputs), executionContext);
+        List<DiscoveryOutput> discoveryOutputs = new ArrayList<>(contractOutputs);
+        discoveryOutputs.addAll(List.of(topologyResult.output(), versionResult.output(), ownershipResult.output()));
+        DiscoveryPluginResult packageCycleAnalysis = new PackageCycleAnalysisPlugin().discover(
+                DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(discoveryOutputs), executionContext);
+        DiscoveryPluginResult moduleAnalysis = new ModuleDependencyAnalysisPlugin().discover(
+                DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(discoveryOutputs), executionContext);
+        DiscoveryPluginResult layerAnalysis = new LayerStructureAnalysisPlugin().discover(
+                DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(discoveryOutputs), executionContext);
+        DiscoveryPluginResult componentAnalysis = new ComponentDependencyAnalysisPlugin().discover(
+                DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(discoveryOutputs), executionContext);
+        DiscoveryPluginResult contractVersionAnalysis = new ContractVersionAnalysisPlugin().discover(
+                DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(discoveryOutputs), executionContext);
+        DiscoveryPluginResult messagingTopologyAnalysis = new MessagingTopologyAnalysisPlugin().discover(
+                DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(discoveryOutputs), executionContext);
+        List<DiscoveryOutput> metricInputs = new ArrayList<>(discoveryOutputs);
+        metricInputs.addAll(List.of(packageCycleAnalysis.output(), moduleAnalysis.output(), layerAnalysis.output(),
+                componentAnalysis.output(), contractVersionAnalysis.output(), messagingTopologyAnalysis.output()));
+        DiscoveryPluginResult dependencyMetrics = new DependencyMetricsPlugin().discover(
+                DiscoveryInput.root(context.rootDirectory()).withPriorOutputs(metricInputs), executionContext);
+        List<DiscoveryPluginResult> pluginResults = new ArrayList<>(List.of(repositoryResult, mavenResult, javaResult, packageDependencyResult));
+        pluginResults.addAll(springResults);
+        pluginResults.addAll(List.of(openApiResult, eventResult, commandResult, topologyResult, versionResult, ownershipResult));
+        pluginResults.addAll(List.of(packageCycleAnalysis, moduleAnalysis, layerAnalysis, componentAnalysis,
+                contractVersionAnalysis, messagingTopologyAnalysis, dependencyMetrics));
+        pluginResults.forEach(result -> artifacts.addAll(toArtifacts(result)));
 
         try (Stream<Path> stream = Files.walk(context.rootDirectory())) {
-            stream.filter(Files::isRegularFile).forEach(path -> inspectFile(context.rootDirectory(), path, artifacts, javaPackages));
+            stream.filter(Files::isRegularFile).forEach(path -> inspectFile(context.rootDirectory(), path, artifacts));
         } catch (IOException e) {
             throw new IllegalStateException("Unable to scan local repository: " + context.rootDirectory(), e);
         }
         discoverTestDirectories(context.rootDirectory(), artifacts);
         discoverAdrDirectories(context.rootDirectory(), artifacts);
-        javaPackages.stream().sorted().forEach(packageName -> artifacts.add(new DiscoveredArtifact(
-                null,
-                DiscoveredArtifactType.JAVA_PACKAGE,
-                packageName,
-                packageName,
-                Map.of("source", "java-package")
-        )));
         return new DiscoveryResult(context.runId(), context.source(), deduplicate(artifacts));
     }
 
@@ -71,6 +117,27 @@ public class LocalRepositoryDiscoveryConnector implements DiscoveryConnector {
                         evidence.attributes().getOrDefault("module", evidence.identity()),
                         metadata(evidence)
                 ));
+                case "java-package" -> artifacts.add(new DiscoveredArtifact(
+                        null,
+                        DiscoveredArtifactType.JAVA_PACKAGE,
+                        evidence.attributes().getOrDefault("packageName", evidence.identity()),
+                        evidence.attributes().getOrDefault("packageName", evidence.identity()),
+                        metadata(evidence)
+                ));
+                case "java-class", "java-interface" -> {
+                    String className = evidence.attributes().getOrDefault("className", "");
+                    if (className.endsWith("Repository")) {
+                        artifacts.add(artifact(DiscoveredArtifactType.REPOSITORY_CLASS, evidence));
+                    }
+                }
+                case "spring-web-controller" -> artifacts.add(artifact(DiscoveredArtifactType.SPRING_CONTROLLER, evidence));
+                case "spring-component" -> {
+                    String kind = evidence.attributes().getOrDefault("componentKind", "");
+                    if (kind.equals("service")) artifacts.add(artifact(DiscoveredArtifactType.SPRING_SERVICE, evidence));
+                    else if (kind.equals("repository")) artifacts.add(artifact(DiscoveredArtifactType.REPOSITORY_CLASS, evidence));
+                }
+                case "spring-data-repository" -> artifacts.add(artifact(DiscoveredArtifactType.REPOSITORY_CLASS, evidence));
+                case "spring-configuration-file" -> artifacts.add(artifact(DiscoveredArtifactType.CONFIGURATION_FILE, evidence));
                 case "file" -> {
                     String fileName = evidence.attributes().getOrDefault("fileName", evidence.identity());
                     if (fileName.equalsIgnoreCase("README.md") || fileName.equalsIgnoreCase("README")) {
@@ -118,7 +185,7 @@ public class LocalRepositoryDiscoveryConnector implements DiscoveryConnector {
         return List.copyOf(unique.values());
     }
 
-    private static void inspectFile(Path root, Path path, List<DiscoveredArtifact> artifacts, Set<String> javaPackages) {
+    private static void inspectFile(Path root, Path path, List<DiscoveredArtifact> artifacts) {
         String relative = root.relativize(path).toString().replace('\\', '/');
         String fileName = path.getFileName().toString();
         if (fileName.equals("pom.xml")) {
@@ -135,34 +202,6 @@ public class LocalRepositoryDiscoveryConnector implements DiscoveryConnector {
         }
         if (isConfigFile(fileName, relative)) {
             artifacts.add(new DiscoveredArtifact(null, DiscoveredArtifactType.CONFIGURATION_FILE, relative, fileName, Map.of()));
-        }
-        if (fileName.endsWith(".java")) {
-            inspectJavaFile(path, relative, artifacts, javaPackages);
-        }
-    }
-
-    private static void inspectJavaFile(Path path, String relative, List<DiscoveredArtifact> artifacts, Set<String> javaPackages) {
-        String content;
-        try {
-            content = Files.readString(path);
-        } catch (IOException e) {
-            throw new IllegalStateException("Unable to read Java file: " + path, e);
-        }
-        content.lines()
-                .map(String::trim)
-                .filter(line -> line.startsWith("package "))
-                .findFirst()
-                .ifPresent(line -> javaPackages.add(line.replace("package ", "").replace(";", "").trim()));
-
-        String fileName = path.getFileName().toString();
-        if (content.contains("@RestController") || content.contains("@Controller")) {
-            artifacts.add(new DiscoveredArtifact(null, DiscoveredArtifactType.SPRING_CONTROLLER, relative, fileName, Map.of()));
-        }
-        if (content.contains("@Service")) {
-            artifacts.add(new DiscoveredArtifact(null, DiscoveredArtifactType.SPRING_SERVICE, relative, fileName, Map.of()));
-        }
-        if (content.contains("@Repository") || fileName.endsWith("Repository.java")) {
-            artifacts.add(new DiscoveredArtifact(null, DiscoveredArtifactType.REPOSITORY_CLASS, relative, fileName, Map.of()));
         }
     }
 

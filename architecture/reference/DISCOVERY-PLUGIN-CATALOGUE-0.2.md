@@ -42,21 +42,23 @@ test source root exists; class imports another package.
 
 Dependencies: Repository Discovery Plugin; Maven Discovery Plugin optional.
 
-Implementation milestone: v0.2 baseline.
+Implementation milestone: v0.2.2.
 
-## Spring Discovery Plugin
+## Spring Discovery Plugins
 
 Inputs: Java structure evidence, dependencies, resource/config files.
 
-Evidence: controllers, services, repository components, configuration
-components, API endpoints, scheduled components.
+Evidence: application entry points, configuration and profiles, controllers,
+services, repository components, API endpoints, transactions, data entities,
+dependency injection, and Spring messaging integration.
 
 Deterministic observations: annotated class is Spring controller/service/repo;
 route mapping exposes endpoint; configuration class exists.
 
-Dependencies: Java Structure Discovery Plugin; Maven Discovery Plugin helpful.
+Dependencies: Repository Discovery Plugin; Java Structure Discovery Plugin;
+Maven Discovery Plugin optional.
 
-Implementation milestone: v0.2 baseline.
+Implementation milestone: v0.2.3.
 
 ## Package Dependency Plugin
 
@@ -70,7 +72,7 @@ dependency on module/library B.
 
 Dependencies: Java Structure Discovery Plugin; Maven Discovery Plugin helpful.
 
-Implementation milestone: v0.2 enhanced discovery.
+Implementation milestone: v0.2.2.
 
 ## OpenAPI Discovery Plugin
 
@@ -84,7 +86,7 @@ controller endpoint has matching or unmatched spec candidate.
 
 Dependencies: Repository Discovery Plugin; Spring Discovery Plugin optional.
 
-Implementation milestone: v0.2 enhanced discovery.
+Implementation milestone: v0.2.4.
 
 ## Messaging Discovery Plugin
 
@@ -99,7 +101,39 @@ to topic/queue; event or command class exists.
 
 Dependencies: Java Structure Discovery Plugin; Spring Discovery Plugin helpful.
 
-Implementation milestone: v0.2 enhanced discovery.
+Implementation milestone: v0.2.4 for event, command, version, ownership, and
+topology evidence; v0.2.3 for Spring messaging markers.
+
+## Contract Version and Ownership Plugins
+
+Inputs: API, event, command, schema, repository, Maven, package, CODEOWNERS,
+and documentation evidence.
+
+Evidence: explicit versions, version headers and paths, compatibility and
+deprecation declarations, ownership contacts, CODEOWNERS matches, Maven/package
+namespace indicators.
+
+Deterministic observations: contract declares version; contract contains no
+explicit version field; source declares or indicates an owner.
+
+Dependencies: Contract Discovery Plugins; Repository and Maven Discovery
+Plugins helpful.
+
+Implementation milestone: v0.2.4.
+
+## Deterministic Structural Analysis Plugins
+
+Release 0.2.5 adds seven deterministic analysis plugins:
+
+- `analysis.package-cycle`
+- `analysis.module-dependency`
+- `analysis.layer-structure`
+- `analysis.component-dependency`
+- `analysis.contract-version`
+- `analysis.messaging-topology`
+- `analysis.dependency-metrics`
+
+They derive cycles, direction, candidate technical layers, connectivity, literal version comparisons, bounded topology paths, and traceable metrics from prior evidence. They emit observations only and do not create findings, recommendations, scorecards, proposed changes, or Product-level interpretations. See `DETERMINISTIC-STRUCTURAL-ANALYSIS.md` and ADR-039.
 
 ## Deployment Descriptor Plugin
 
