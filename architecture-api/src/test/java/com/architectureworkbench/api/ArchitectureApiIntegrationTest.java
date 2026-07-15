@@ -4,6 +4,12 @@ import com.architectureworkbench.api.ApiDtos.CloseReviewBoardSessionRequest;
 import com.architectureworkbench.api.ApiDtos.CreateWorkspaceRequest;
 import com.architectureworkbench.api.ApiDtos.DecideProposedChangeRequest;
 import com.architectureworkbench.api.ApiDtos.DiscoveryRunResponse;
+import com.architectureworkbench.api.ApiDtos.DiscoveryRunDetails;
+import com.architectureworkbench.api.ApiDtos.DiscoveryRunSummary;
+import com.architectureworkbench.api.ApiDtos.DiscoveryEvidenceView;
+import com.architectureworkbench.api.ApiDtos.DiscoveryObservationView;
+import com.architectureworkbench.api.ApiDtos.DiscoveryMetricView;
+import com.architectureworkbench.api.ApiDtos.DiscoveryDiagnosticView;
 import com.architectureworkbench.api.ApiDtos.FindingResponse;
 import com.architectureworkbench.api.ApiDtos.GenerateProjectionRequest;
 import com.architectureworkbench.api.ApiDtos.GraphResponse;
@@ -167,6 +173,40 @@ class ArchitectureApiIntegrationTest {
         assertEquals("REACT_FLOW", projection.type());
         assertEquals(1, projection.sourceElementRefs().size());
         assertNotNull(projection.payload());
+    }
+
+    @Test
+    void exposesInspectableDeterministicDiscoveryRunsAndFilters() throws Exception {
+        createSampleSpringProject(tempDir);
+        WorkspaceResponse workspace = postJson("/api/workspaces", new CreateWorkspaceRequest("Evidence Workspace", "architect"),
+                WorkspaceResponse.class, HttpStatus.CREATED);
+        DiscoveryRunDetails run = postJson("/api/workspaces/" + workspace.id() + "/discovery-runs",
+                new ApiDtos.RunLocalDiscoveryRequest(tempDir.toString(), "architect"), DiscoveryRunDetails.class, HttpStatus.CREATED);
+
+        assertEquals("COMPLETED", run.summary().status());
+        assertTrue(run.summary().pluginExecutionCount() > 20);
+        assertFalse(run.evidence().isEmpty());
+        assertFalse(run.observations().isEmpty());
+        assertFalse(run.metrics().isEmpty());
+        assertTrue(run.plugins().stream().allMatch(plugin -> plugin.startedAt() != null && plugin.completedAt() != null));
+        assertTrue(run.evidence().stream().allMatch(item -> item.confidence() != null && item.provenance() != null));
+
+        List<DiscoveryRunSummary> history = getList("/api/workspaces/" + workspace.id() + "/discovery-runs", new TypeReference<>() {});
+        assertTrue(history.stream().anyMatch(item -> item.runId().equals(run.summary().runId())));
+        DiscoveryRunDetails reloaded = getJson("/api/workspaces/" + workspace.id() + "/discovery-runs/" + run.summary().runId(), DiscoveryRunDetails.class);
+        assertEquals(run.summary().evidenceCount(), reloaded.evidence().size());
+
+        List<DiscoveryEvidenceView> packages = getList("/api/workspaces/" + workspace.id() + "/discovery-runs/" + run.summary().runId()
+                + "/evidence?evidenceType=java-package&minimumConfidence=0.9", new TypeReference<>() {});
+        assertFalse(packages.isEmpty());
+        assertTrue(packages.stream().allMatch(item -> item.type().equals("java-package") && item.confidence().value() >= .9));
+        List<DiscoveryObservationView> observations = getList("/api/workspaces/" + workspace.id() + "/discovery-runs/" + run.summary().runId()
+                + "/observations?supportingEvidenceId=" + packages.getFirst().evidenceId(), new TypeReference<>() {});
+        assertTrue(observations.stream().allMatch(item -> item.supportingEvidenceIds().contains(packages.getFirst().evidenceId())));
+        List<DiscoveryMetricView> metrics = getList("/api/workspaces/" + workspace.id() + "/discovery-runs/" + run.summary().runId() + "/metrics", new TypeReference<>() {});
+        List<DiscoveryDiagnosticView> diagnostics = getList("/api/workspaces/" + workspace.id() + "/discovery-runs/" + run.summary().runId() + "/diagnostics", new TypeReference<>() {});
+        assertFalse(metrics.isEmpty());
+        assertEquals(run.summary().warningCount() + run.summary().failureCount(), diagnostics.size());
     }
 
     private <T> T getJson(String url, Class<T> responseType) throws Exception {

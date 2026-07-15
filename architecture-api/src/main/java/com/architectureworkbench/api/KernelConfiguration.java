@@ -2,6 +2,7 @@ package com.architectureworkbench.api;
 
 import com.architectureworkbench.audit.AuditSink;
 import com.architectureworkbench.discovery.DiscoveryGraphMapper;
+import com.architectureworkbench.discovery.DiscoveryPluginPipeline;
 import com.architectureworkbench.discovery.DiscoveryService;
 import com.architectureworkbench.discovery.HealthcheckService;
 import com.architectureworkbench.discovery.LocalRepositoryDiscoveryConnector;
@@ -25,6 +26,7 @@ import com.architectureworkbench.workspace.WorkspaceRepository;
 import com.architectureworkbench.workspace.WorkspaceService;
 import java.nio.file.Path;
 import java.util.List;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -79,6 +81,26 @@ class KernelConfiguration {
     @Bean
     ReviewBoardSessionStore reviewBoardSessionStore(Environment environment) {
         return inMemory(environment) ? new InMemoryReviewBoardSessionStore() : new FileReviewBoardSessionStore(storageRoot(environment));
+    }
+
+    @Bean
+    DiscoveryRunReadRepository discoveryRunReadRepository(Environment environment, ObjectMapper objectMapper) {
+        return inMemory(environment) ? new InMemoryDiscoveryRunReadRepository()
+                : new FileDiscoveryRunReadRepository(storageRoot(environment), objectMapper);
+    }
+
+    @Bean
+    DiscoveryPluginPipeline discoveryPluginPipeline() {
+        return new DiscoveryPluginPipeline();
+    }
+
+    @Bean
+    DiscoveryRunExplorerService discoveryRunExplorerService(
+            DiscoveryPluginPipeline pipeline,
+            DiscoveryRunReadRepository repository,
+            AuditSink kernelAuditSink
+    ) {
+        return new DiscoveryRunExplorerService(pipeline, repository, kernelAuditSink);
     }
 
     @Bean

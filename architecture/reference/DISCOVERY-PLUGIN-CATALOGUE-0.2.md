@@ -177,3 +177,7 @@ Release 0.2 baseline requirements:
 - distributed monolith scoring
 
 These future plugins must still follow the same evidence-first contract.
+
+## Discovery Run Read Model and Evidence Explorer
+
+Release 0.2.6 exposes plugin executions, evidence, neutral observations, structural metrics, confidence, provenance, and diagnostics through persisted workspace read models and the React evidence explorer. This is an execution and navigation layer over the catalogue, not an interpretation plugin. See `DISCOVERY-RUN-AND-EVIDENCE-EXPLORER.md` and ADR-040.

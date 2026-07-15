@@ -68,7 +68,9 @@ public class FileWorkspaceIntegrityService {
         }
         Map<String, String> expectedChecksums = new LinkedHashMap<>();
         manifest.checksums().forEach(checksum -> expectedChecksums.put(checksum.fileName(), checksum.sha256()));
-        for (String fileName : MANIFEST_CHECKED_FILES) {
+        java.util.Set<String> checkedFiles = new java.util.LinkedHashSet<>(checkedFiles(directory));
+        checkedFiles.addAll(expectedChecksums.keySet());
+        for (String fileName : checkedFiles) {
             Path file = directory.resolve(fileName);
             String expected = expectedChecksums.get(fileName);
             if (!Files.exists(file)) {
@@ -123,13 +125,27 @@ public class FileWorkspaceIntegrityService {
 
     private List<StorageFileChecksum> checksums(Path directory) {
         List<StorageFileChecksum> checksums = new ArrayList<>();
-        for (String fileName : MANIFEST_CHECKED_FILES) {
+        for (String fileName : checkedFiles(directory)) {
             Path file = directory.resolve(fileName);
             if (Files.exists(file)) {
                 checksums.add(new StorageFileChecksum(fileName, sha256(file)));
             }
         }
         return checksums;
+    }
+
+    private List<String> checkedFiles(Path directory) {
+        List<String> files = new ArrayList<>(MANIFEST_CHECKED_FILES);
+        Path discoveryRuns = directory.resolve("discovery-runs");
+        if (Files.isDirectory(discoveryRuns)) {
+            try (java.util.stream.Stream<Path> paths = Files.walk(discoveryRuns)) {
+                paths.filter(Files::isRegularFile).filter(path -> path.getFileName().toString().endsWith(".json"))
+                        .map(directory::relativize).map(path -> path.toString().replace('\\', '/')).sorted().forEach(files::add);
+            } catch (IOException exception) {
+                throw new IllegalStateException("Unable to enumerate discovery run files in " + directory, exception);
+            }
+        }
+        return List.copyOf(files);
     }
 
     private StorageManifest readManifestIfPresent(Path directory) {

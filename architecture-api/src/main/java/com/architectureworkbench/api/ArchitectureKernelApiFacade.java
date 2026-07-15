@@ -4,6 +4,13 @@ import com.architectureworkbench.api.ApiDtos.CloseReviewBoardSessionRequest;
 import com.architectureworkbench.api.ApiDtos.CreateWorkspaceRequest;
 import com.architectureworkbench.api.ApiDtos.DecideProposedChangeRequest;
 import com.architectureworkbench.api.ApiDtos.DiscoveryRunResponse;
+import com.architectureworkbench.api.ApiDtos.DiscoveryRunDetails;
+import com.architectureworkbench.api.ApiDtos.DiscoveryRunSummary;
+import com.architectureworkbench.api.ApiDtos.DiscoveryPluginExecution;
+import com.architectureworkbench.api.ApiDtos.DiscoveryEvidenceView;
+import com.architectureworkbench.api.ApiDtos.DiscoveryObservationView;
+import com.architectureworkbench.api.ApiDtos.DiscoveryMetricView;
+import com.architectureworkbench.api.ApiDtos.DiscoveryDiagnosticView;
 import com.architectureworkbench.api.ApiDtos.ElementResponse;
 import com.architectureworkbench.api.ApiDtos.FindingResponse;
 import com.architectureworkbench.api.ApiDtos.GenerateProjectionRequest;
@@ -64,6 +71,7 @@ import org.springframework.stereotype.Service;
 class ArchitectureKernelApiFacade {
     private final WorkspaceService workspaceService;
     private final DiscoveryService discoveryService;
+    private final DiscoveryRunExplorerService discoveryRunExplorerService;
     private final ReviewBoardWorkflowService reviewBoardWorkflowService;
     private final ProposedChangeService proposedChangeService;
     private final ProposedChangeRepository proposedChangeRepository;
@@ -78,6 +86,7 @@ class ArchitectureKernelApiFacade {
     ArchitectureKernelApiFacade(
             WorkspaceService workspaceService,
             DiscoveryService discoveryService,
+            DiscoveryRunExplorerService discoveryRunExplorerService,
             ReviewBoardWorkflowService reviewBoardWorkflowService,
             ProposedChangeService proposedChangeService,
             ProposedChangeRepository proposedChangeRepository,
@@ -86,6 +95,7 @@ class ArchitectureKernelApiFacade {
     ) {
         this.workspaceService = workspaceService;
         this.discoveryService = discoveryService;
+        this.discoveryRunExplorerService = discoveryRunExplorerService;
         this.reviewBoardWorkflowService = reviewBoardWorkflowService;
         this.proposedChangeService = proposedChangeService;
         this.proposedChangeRepository = proposedChangeRepository;
@@ -130,6 +140,39 @@ class ArchitectureKernelApiFacade {
             proposedChangeRepository.save(change);
         });
         return discoveryRunResponse(workspaceId, graph.graphId(), run);
+    }
+
+    DiscoveryRunDetails createDiscoveryRun(String workspaceId, RunLocalDiscoveryRequest request) {
+        graph(workspaceId);
+        return discoveryRunExplorerService.run(workspaceId, requireText(request.path(), "path"), actor(request.actorRef()));
+    }
+
+    List<DiscoveryRunSummary> listDiscoveryRuns(String workspaceId) {
+        graph(workspaceId); return discoveryRunExplorerService.list(workspaceId);
+    }
+
+    DiscoveryRunDetails getDiscoveryRun(String workspaceId, String runId) {
+        graph(workspaceId); return discoveryRunExplorerService.details(workspaceId, runId);
+    }
+
+    List<DiscoveryPluginExecution> listDiscoveryPlugins(String workspaceId, String runId) {
+        return getDiscoveryRun(workspaceId, runId).plugins();
+    }
+
+    List<DiscoveryEvidenceView> listDiscoveryEvidence(String workspaceId, String runId, Map<String, String> filters) {
+        graph(workspaceId); return discoveryRunExplorerService.evidence(workspaceId, runId, filters);
+    }
+
+    List<DiscoveryObservationView> listDiscoveryObservations(String workspaceId, String runId, Map<String, String> filters) {
+        graph(workspaceId); return discoveryRunExplorerService.observations(workspaceId, runId, filters);
+    }
+
+    List<DiscoveryMetricView> listDiscoveryMetrics(String workspaceId, String runId, Map<String, String> filters) {
+        graph(workspaceId); return discoveryRunExplorerService.metrics(workspaceId, runId, filters);
+    }
+
+    List<DiscoveryDiagnosticView> listDiscoveryDiagnostics(String workspaceId, String runId, Map<String, String> filters) {
+        graph(workspaceId); return discoveryRunExplorerService.diagnostics(workspaceId, runId, filters);
     }
 
     List<FindingResponse> listDiscoveryFindings(String workspaceId, String runId) {

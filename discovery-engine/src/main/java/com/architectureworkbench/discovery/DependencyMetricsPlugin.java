@@ -31,11 +31,16 @@ public class DependencyMetricsPlugin implements DiscoveryPlugin {
                 ids(prior), StructuralAnalysisSupport.details("inputEvidenceCount", Integer.toString(prior.size()),
                         "derivation", "All prior discovery and structural-analysis evidence supplied to the metric plugin."));
         out.add(scope);
+        count(input, out, obs, "repository-count", byType.getOrDefault("repository-root", List.of()));
         count(input, out, obs, "package-count", byType.getOrDefault("java-package", List.of()));
         count(input, out, obs, "class-count", types(byType, "java-class", "java-interface", "java-enum", "java-record", "java-annotation"));
+        count(input, out, obs, "api-endpoint-count", byType.getOrDefault("spring-http-endpoint", List.of()));
         countDistinct(input, out, obs, "module-count", types(byType, "build-module", "build-module-declaration"), e -> first(e.attributes().get("module"), e.attributes().get("artifactId"), e.identity()));
         List<DiscoveryEvidence> packageEdges = byType.getOrDefault("package-dependency", List.of()); count(input, out, obs, "dependency-edge-count", packageEdges);
-        count(input, out, obs, "cycle-count", types(byType, "direct-package-cycle", "multi-package-cycle"));
+        List<DiscoveryEvidence> packageCycles = types(byType, "direct-package-cycle", "multi-package-cycle");
+        count(input, out, obs, "cycle-count", packageCycles);
+        count(input, out, obs, "package-cycle-count", packageCycles);
+        count(input, out, obs, "module-cycle-count", byType.getOrDefault("bidirectional-module-reference", List.of()));
         packageFanMetrics(input, out, obs, packageEdges);
         count(input, out, obs, "component-dependency-count", byType.getOrDefault("component-dependency-path", List.of()));
         List<DiscoveryEvidence> contracts = types(byType, "api-contract", "openapi-document", "asyncapi-message", "event-contract", "java-event-contract", "command-contract", "java-command-contract");

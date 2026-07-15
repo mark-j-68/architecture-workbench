@@ -49,6 +49,54 @@ export interface DiscoveryRunResponse {
   proposedChangeCount: number
 }
 
+export interface DiscoveryRunSummary {
+  runId: string
+  workspaceId: string
+  sourceReference: string
+  status: string
+  startedAt: string
+  completedAt: string
+  correlationId: string
+  causationId: string
+  pluginExecutionCount: number
+  evidenceCount: number
+  observationCount: number
+  metricCount: number
+  warningCount: number
+  failureCount: number
+  partialSuccess: boolean
+}
+
+export interface DiscoveryConfidenceView { value: number; percentage: number; band: string; rationale: string }
+export interface DiscoveryProvenanceView {
+  repositoryRelativeFilePath: string; module: string; packageName: string; symbol: string
+  lineNumber: number | null; source: string; provenance: string
+}
+export interface DiscoveryEvidenceView {
+  evidenceId: string; type: string; title: string; summary: string; provenance: DiscoveryProvenanceView
+  confidence: DiscoveryConfidenceView; classification: string; sourceEvidenceIds: string[]
+  derivationSummary: string; unresolvedValue: string; attributes: Record<string, string>
+}
+export interface DiscoveryObservationView {
+  observationId: string; observationType: string; description: string; pluginId: string; module: string
+  classification: string; confidence: DiscoveryConfidenceView; derivationSummary: string; supportingEvidenceIds: string[]
+}
+export interface DiscoveryMetricView {
+  metricId: string; name: string; value: number; unit: string; scope: string; module: string; pluginId: string
+  derivationSummary: string; confidence: DiscoveryConfidenceView; supportingEvidenceIds: string[]
+}
+export interface DiscoveryDiagnosticView { diagnosticId: string; pluginId: string; severity: string; message: string; occurredAt: string }
+export interface DiscoveryPluginExecution {
+  pluginId: string; name: string; category: string; status: string; startedAt: string; completedAt: string
+  evidenceCount: number; observationCount: number; metricCount: number; warnings: string[]; errors: string[]
+  dependencies: string[]; partialSuccess: boolean
+}
+export interface DiscoveryRunDetails {
+  summary: DiscoveryRunSummary; plugins: DiscoveryPluginExecution[]; evidence: DiscoveryEvidenceView[]
+  observations: DiscoveryObservationView[]; metrics: DiscoveryMetricView[]; diagnostics: DiscoveryDiagnosticView[]
+  confidenceDistribution: Record<string, number>
+}
+
 export interface FindingResponse {
   id: string
   severity: string

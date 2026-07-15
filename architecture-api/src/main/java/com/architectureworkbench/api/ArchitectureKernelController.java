@@ -4,6 +4,13 @@ import com.architectureworkbench.api.ApiDtos.CloseReviewBoardSessionRequest;
 import com.architectureworkbench.api.ApiDtos.CreateWorkspaceRequest;
 import com.architectureworkbench.api.ApiDtos.DecideProposedChangeRequest;
 import com.architectureworkbench.api.ApiDtos.DiscoveryRunResponse;
+import com.architectureworkbench.api.ApiDtos.DiscoveryRunDetails;
+import com.architectureworkbench.api.ApiDtos.DiscoveryRunSummary;
+import com.architectureworkbench.api.ApiDtos.DiscoveryPluginExecution;
+import com.architectureworkbench.api.ApiDtos.DiscoveryEvidenceView;
+import com.architectureworkbench.api.ApiDtos.DiscoveryObservationView;
+import com.architectureworkbench.api.ApiDtos.DiscoveryMetricView;
+import com.architectureworkbench.api.ApiDtos.DiscoveryDiagnosticView;
 import com.architectureworkbench.api.ApiDtos.FindingResponse;
 import com.architectureworkbench.api.ApiDtos.GenerateProjectionRequest;
 import com.architectureworkbench.api.ApiDtos.GraphResponse;
@@ -16,6 +23,7 @@ import com.architectureworkbench.api.ApiDtos.ReviewBoardSessionResponse;
 import com.architectureworkbench.api.ApiDtos.RunLocalDiscoveryRequest;
 import com.architectureworkbench.api.ApiDtos.WorkspaceResponse;
 import java.util.List;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +31,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -53,6 +62,51 @@ class ArchitectureKernelController {
     @PostMapping("/workspaces/{workspaceId}/discovery/local")
     DiscoveryRunResponse runLocalDiscovery(@PathVariable("workspaceId") String workspaceId, @RequestBody RunLocalDiscoveryRequest request) {
         return facade.runLocalDiscovery(workspaceId, request);
+    }
+
+    @PostMapping("/workspaces/{workspaceId}/discovery-runs")
+    @ResponseStatus(HttpStatus.CREATED)
+    DiscoveryRunDetails createDiscoveryRun(@PathVariable("workspaceId") String workspaceId, @RequestBody RunLocalDiscoveryRequest request) {
+        return facade.createDiscoveryRun(workspaceId, request);
+    }
+
+    @GetMapping("/workspaces/{workspaceId}/discovery-runs")
+    List<DiscoveryRunSummary> listDiscoveryRuns(@PathVariable("workspaceId") String workspaceId) {
+        return facade.listDiscoveryRuns(workspaceId);
+    }
+
+    @GetMapping("/workspaces/{workspaceId}/discovery-runs/{runId}")
+    DiscoveryRunDetails getDiscoveryRun(@PathVariable("workspaceId") String workspaceId, @PathVariable("runId") String runId) {
+        return facade.getDiscoveryRun(workspaceId, runId);
+    }
+
+    @GetMapping("/workspaces/{workspaceId}/discovery-runs/{runId}/plugins")
+    List<DiscoveryPluginExecution> listDiscoveryPlugins(@PathVariable("workspaceId") String workspaceId, @PathVariable("runId") String runId) {
+        return facade.listDiscoveryPlugins(workspaceId, runId);
+    }
+
+    @GetMapping("/workspaces/{workspaceId}/discovery-runs/{runId}/evidence")
+    List<DiscoveryEvidenceView> listDiscoveryEvidence(@PathVariable("workspaceId") String workspaceId, @PathVariable("runId") String runId,
+                                                       @RequestParam Map<String, String> filters) {
+        return facade.listDiscoveryEvidence(workspaceId, runId, filters);
+    }
+
+    @GetMapping("/workspaces/{workspaceId}/discovery-runs/{runId}/observations")
+    List<DiscoveryObservationView> listDiscoveryObservations(@PathVariable("workspaceId") String workspaceId, @PathVariable("runId") String runId,
+                                                               @RequestParam Map<String, String> filters) {
+        return facade.listDiscoveryObservations(workspaceId, runId, filters);
+    }
+
+    @GetMapping("/workspaces/{workspaceId}/discovery-runs/{runId}/metrics")
+    List<DiscoveryMetricView> listDiscoveryMetrics(@PathVariable("workspaceId") String workspaceId, @PathVariable("runId") String runId,
+                                                     @RequestParam Map<String, String> filters) {
+        return facade.listDiscoveryMetrics(workspaceId, runId, filters);
+    }
+
+    @GetMapping("/workspaces/{workspaceId}/discovery-runs/{runId}/diagnostics")
+    List<DiscoveryDiagnosticView> listDiscoveryDiagnostics(@PathVariable("workspaceId") String workspaceId, @PathVariable("runId") String runId,
+                                                             @RequestParam Map<String, String> filters) {
+        return facade.listDiscoveryDiagnostics(workspaceId, runId, filters);
     }
 
     @GetMapping("/workspaces/{workspaceId}/discovery/runs/{runId}/findings")

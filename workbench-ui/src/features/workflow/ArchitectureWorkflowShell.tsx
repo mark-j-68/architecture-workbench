@@ -11,6 +11,7 @@ import type {
   WorkspaceResponse,
 } from '../../api/architectureApiTypes'
 import { ArchitectureGraphExplorer } from '../graph/ArchitectureGraphExplorer'
+import { DiscoveryRunsExplorer } from '../discovery/DiscoveryRunsExplorer'
 import { graphResponseToViewModel, projectionResponseToViewModel } from './workflowViewModels'
 import './workflow.css'
 
@@ -32,6 +33,7 @@ export function ArchitectureWorkflowShell() {
   const [projection, setProjection] = useState<ProjectionResponse | null>(null)
   const [busy, setBusy] = useState('')
   const [message, setMessage] = useState('')
+  const [workspaceView, setWorkspaceView] = useState<'discovery' | 'architecture'>('discovery')
 
   useEffect(() => {
     refreshWorkspaces().catch(showError)
@@ -171,8 +173,9 @@ export function ArchitectureWorkflowShell() {
           <h1>Architecture Workbench</h1>
           <p>Architecture OS workflow adapter</p>
         </div>
-        <div className="status-strip">
-          <span>{busy || message || 'Ready'}</span>
+        <div className="header-actions">
+          <div className="view-switcher"><button className={workspaceView === 'discovery' ? 'active' : ''} onClick={() => setWorkspaceView('discovery')}>Discovery Evidence</button><button className={workspaceView === 'architecture' ? 'active' : ''} onClick={() => setWorkspaceView('architecture')}>Architecture Workflow</button></div>
+          <div className="status-strip"><span>{busy || message || 'Ready'}</span></div>
         </div>
       </header>
 
@@ -207,14 +210,14 @@ export function ArchitectureWorkflowShell() {
             </div>
           </section>
 
-          <section className="panel">
+          {workspaceView === 'architecture' && <section className="panel">
             <h2>Run Discovery</h2>
             <input
               placeholder="/path/to/local/repository"
               value={repositoryPath}
               onChange={(event) => setRepositoryPath(event.target.value)}
             />
-            <button onClick={runDiscovery} disabled={!selectedWorkspaceId || !repositoryPath || Boolean(busy)}>Run Local Discovery</button>
+            <button onClick={runDiscovery} disabled={!selectedWorkspaceId || !repositoryPath || Boolean(busy)}>Run Legacy Architecture Workflow</button>
             {discoveryRun && (
               <dl className="metrics">
                 <div><dt>Artifacts</dt><dd>{discoveryRun.artifactCount}</dd></div>
@@ -222,7 +225,7 @@ export function ArchitectureWorkflowShell() {
                 <div><dt>Proposals</dt><dd>{discoveryRun.proposedChangeCount}</dd></div>
               </dl>
             )}
-          </section>
+          </section>}
         </aside>
 
         <main className="content">
@@ -231,12 +234,13 @@ export function ArchitectureWorkflowShell() {
               <h2>{selectedWorkspace?.name ?? 'No workspace selected'}</h2>
               <p>{selectedWorkspace?.graphId ?? 'Create or select a workspace to begin.'}</p>
             </div>
-            <div className="toolbar">
+            {workspaceView === 'architecture' && <div className="toolbar">
               <button onClick={() => refreshGraph()} disabled={!selectedWorkspaceId || Boolean(busy)}>Refresh Graph</button>
               <button onClick={generateProjection} disabled={!selectedWorkspaceId || Boolean(busy)}>Generate Projection</button>
-            </div>
+            </div>}
           </section>
 
+          {workspaceView === 'discovery' ? <DiscoveryRunsExplorer workspaceId={selectedWorkspaceId} actorRef={ACTOR} onStatus={setMessage} /> : <>
           <div className="results-grid">
             <section className="panel">
               <h2>Discovery Results</h2>
@@ -313,6 +317,7 @@ export function ArchitectureWorkflowShell() {
             <h2>Architecture Graph Projection Viewer</h2>
             <ArchitectureGraphExplorer graph={graphView} />
           </section>
+          </>}
         </main>
       </div>
     </div>

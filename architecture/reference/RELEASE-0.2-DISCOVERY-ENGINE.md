@@ -21,6 +21,8 @@ Release 0.2 supports:
 - incremental discovery
 - plugin dependencies
 - traceability into AIM
+- persisted discovery-run history
+- API and UI evidence inspection with confidence, provenance, metrics, and diagnostics
 - future runtime and cloud discovery
 
 ## Boundary
@@ -65,6 +67,8 @@ It answers:
 - What evidence proves those facts?
 - What narrow structural observations can be made deterministically?
 - How confident are those observations?
+- Which plugins ran, and were any outputs partial or failed?
+- Which source evidence supports each observation or metric?
 
 Release 0.3 is Multi-Repo Product Architecture Intelligence.
 

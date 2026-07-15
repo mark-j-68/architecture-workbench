@@ -46,6 +46,118 @@ public final class ApiDtos {
     ) {
     }
 
+    public record DiscoveryRunSummary(
+            String runId,
+            String workspaceId,
+            String sourceReference,
+            String status,
+            Instant startedAt,
+            Instant completedAt,
+            String correlationId,
+            String causationId,
+            int pluginExecutionCount,
+            int evidenceCount,
+            int observationCount,
+            int metricCount,
+            int warningCount,
+            int failureCount,
+            boolean partialSuccess
+    ) {
+    }
+
+    public record DiscoveryRunDetails(
+            DiscoveryRunSummary summary,
+            List<DiscoveryPluginExecution> plugins,
+            List<DiscoveryEvidenceView> evidence,
+            List<DiscoveryObservationView> observations,
+            List<DiscoveryMetricView> metrics,
+            List<DiscoveryDiagnosticView> diagnostics,
+            Map<String, Integer> confidenceDistribution
+    ) {
+    }
+
+    public record DiscoveryPluginExecution(
+            String pluginId,
+            String name,
+            String category,
+            String status,
+            Instant startedAt,
+            Instant completedAt,
+            int evidenceCount,
+            int observationCount,
+            int metricCount,
+            List<String> warnings,
+            List<String> errors,
+            List<String> dependencies,
+            boolean partialSuccess
+    ) {
+    }
+
+    public record DiscoveryEvidenceView(
+            String evidenceId,
+            String type,
+            String title,
+            String summary,
+            DiscoveryProvenanceView provenance,
+            DiscoveryConfidenceView confidence,
+            String classification,
+            List<String> sourceEvidenceIds,
+            String derivationSummary,
+            String unresolvedValue,
+            Map<String, String> attributes
+    ) {
+    }
+
+    public record DiscoveryObservationView(
+            String observationId,
+            String observationType,
+            String description,
+            String pluginId,
+            String module,
+            String classification,
+            DiscoveryConfidenceView confidence,
+            String derivationSummary,
+            List<String> supportingEvidenceIds
+    ) {
+    }
+
+    public record DiscoveryMetricView(
+            String metricId,
+            String name,
+            double value,
+            String unit,
+            String scope,
+            String module,
+            String pluginId,
+            String derivationSummary,
+            DiscoveryConfidenceView confidence,
+            List<String> supportingEvidenceIds
+    ) {
+    }
+
+    public record DiscoveryDiagnosticView(
+            String diagnosticId,
+            String pluginId,
+            String severity,
+            String message,
+            Instant occurredAt
+    ) {
+    }
+
+    public record DiscoveryProvenanceView(
+            String repositoryRelativeFilePath,
+            String module,
+            String packageName,
+            String symbol,
+            Integer lineNumber,
+            String source,
+            String provenance
+    ) {
+    }
+
+    public record DiscoveryConfidenceView(double value, int percentage, String band, String rationale) {
+    }
+
     public record FindingResponse(
             String id,
             String severity,
