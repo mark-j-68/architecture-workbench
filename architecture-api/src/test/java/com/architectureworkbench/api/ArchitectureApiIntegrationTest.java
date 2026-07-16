@@ -209,6 +209,21 @@ class ArchitectureApiIntegrationTest {
         assertEquals(run.summary().warningCount() + run.summary().failureCount(), diagnostics.size());
     }
 
+    @Test
+    void exposesProductCompositionWithoutReplacingDiscoveryApis() throws Exception {
+        createSampleSpringProject(tempDir);
+        WorkspaceResponse workspace = postJson("/api/workspaces", new CreateWorkspaceRequest("Product Workspace", "architect"), WorkspaceResponse.class, HttpStatus.CREATED);
+        DiscoveryRunDetails run = postJson("/api/workspaces/" + workspace.id() + "/discovery-runs", new ApiDtos.RunLocalDiscoveryRequest(tempDir.toString(), "architect"), DiscoveryRunDetails.class, HttpStatus.CREATED);
+        ApiDtos.ProductView product = postJson("/api/workspaces/" + workspace.id() + "/products", new ApiDtos.CreateProductRequest("Mortgage", "Composition test", "architect"), ApiDtos.ProductView.class, HttpStatus.CREATED);
+        product = postJson("/api/workspaces/" + workspace.id() + "/products/" + product.productId() + "/repositories", new ApiDtos.AddProductRepositoryRequest("sample", tempDir.toString(), "SERVICE", List.of(run.summary().runId()), java.util.Map.of(), java.util.Map.of("team", "mortgage"), "architect"), ApiDtos.ProductView.class, HttpStatus.CREATED);
+        assertEquals(1, product.repositories().size());
+        ApiDtos.ProductCompositionView composition = postJson("/api/workspaces/" + workspace.id() + "/products/" + product.productId() + "/compose", java.util.Map.of(), ApiDtos.ProductCompositionView.class, HttpStatus.OK);
+        assertFalse(composition.evidence().isEmpty());
+        assertEquals(run.summary().runId(), composition.evidence().getFirst().discoveryRunId());
+        assertEquals(1, getList("/api/workspaces/" + workspace.id() + "/products", new TypeReference<List<ApiDtos.ProductView>>() {}).size());
+        assertEquals(composition.metrics(), getJson("/api/workspaces/" + workspace.id() + "/products/" + product.productId() + "/metrics", ApiDtos.ProductCompositionMetrics.class));
+    }
+
     private <T> T getJson(String url, Class<T> responseType) throws Exception {
         String content = mvc.perform(get(url))
                 .andExpect(status().isOk())

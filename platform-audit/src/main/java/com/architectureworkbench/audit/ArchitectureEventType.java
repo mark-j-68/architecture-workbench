@@ -18,7 +18,13 @@ public enum ArchitectureEventType {
     EXPERIMENT_STARTED("ExperimentStarted"),
     OUTCOME_RECORDED("OutcomeRecorded"),
     LEARNING_DERIVED("LearningDerived"),
-    PATTERN_PUBLISHED("PatternPublished");
+    PATTERN_PUBLISHED("PatternPublished"),
+    PRODUCT_CREATED("ProductCreated"),
+    PRODUCT_REPOSITORY_ADDED("ProductRepositoryAdded"),
+    PRODUCT_REPOSITORY_REMOVED("ProductRepositoryRemoved"),
+    PRODUCT_MODULE_CREATED("ProductModuleCreated"),
+    PRODUCT_REPOSITORY_ASSIGNED_TO_MODULE("ProductRepositoryAssignedToModule"),
+    PRODUCT_COMPOSITION_GENERATED("ProductCompositionGenerated");
 
     private final String eventName;
 

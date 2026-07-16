@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 class ApiExceptionHandler {
-    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class, java.util.NoSuchElementException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     ErrorResponse handleBadRequest(RuntimeException exception) {
         return new ErrorResponse(exception.getMessage());

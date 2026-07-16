@@ -90,6 +90,16 @@ class KernelConfiguration {
     }
 
     @Bean
+    ProductRepositoryStore productRepositoryStore(Environment environment, ObjectMapper objectMapper) {
+        return inMemory(environment) ? new InMemoryProductRepositoryStore() : new FileProductRepositoryStore(storageRoot(environment), objectMapper);
+    }
+
+    @Bean
+    ProductCompositionService productCompositionService(ProductRepositoryStore products, DiscoveryRunReadRepository runs, AuditSink auditSink) {
+        return new ProductCompositionService(products, runs, auditSink);
+    }
+
+    @Bean
     DiscoveryPluginPipeline discoveryPluginPipeline() {
         return new DiscoveryPluginPipeline();
     }

@@ -1,0 +1,20 @@
+package com.architectureworkbench.api;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException; import java.nio.file.*; import java.util.*;
+final class FileProductRepositoryStore implements ProductRepositoryStore {
+ private final Path root; private final ObjectMapper mapper;
+ FileProductRepositoryStore(Path root,ObjectMapper mapper){this.root=root;this.mapper=mapper.findAndRegisterModules();}
+ private Path dir(String w,String p){return root.resolve(w).resolve("products").resolve(p);}
+ public synchronized ProductModels.Product save(ProductModels.Product p){Path d=dir(p.workspaceId(),p.id().value());write(d.resolve("product.json"),new ProductHeader(p.id(),p.workspaceId(),p.name(),p.description(),p.status(),p.createdAt(),p.updatedAt()));write(d.resolve("repositories.json"),p.repositories());write(d.resolve("modules.json"),p.modules());write(d.resolve("composition.json"),new CompositionState(p.compositionVersion(),null));refresh(p.workspaceId());return p;}
+ public Optional<ProductModels.Product> find(String w,String p){Path d=dir(w,p);if(!Files.exists(d.resolve("product.json")))return Optional.empty(); ProductHeader h=read(d.resolve("product.json"),ProductHeader.class); var repos=readList(d.resolve("repositories.json"),ProductModels.ProductRepository[].class);var mods=readList(d.resolve("modules.json"),ProductModels.ProductModule[].class);CompositionState c=read(d.resolve("composition.json"),CompositionState.class);return Optional.of(new ProductModels.Product(h.id,h.workspaceId,h.name,h.description,h.status,repos,mods,c.version,h.createdAt,h.updatedAt));}
+ public List<ProductModels.Product> list(String w){Path p=root.resolve(w).resolve("products");if(!Files.isDirectory(p))return List.of();try(var s=Files.list(p)){return s.filter(Files::isDirectory).map(x->find(w,x.getFileName().toString())).flatMap(Optional::stream).sorted(Comparator.comparing(x->x.name().value())).toList();}catch(IOException e){throw new IllegalStateException("Unable to list products",e);}}
+ public void delete(String w,String p){find(w,p).ifPresent(product->save(new ProductModels.Product(product.id(),w,product.name(),product.description(),ProductModels.ProductStatus.ARCHIVED,product.repositories(),product.modules(),product.compositionVersion().next(),product.createdAt(),java.time.Instant.now())));}
+ public synchronized void saveComposition(String w,String p,ApiDtos.ProductCompositionView c){ProductModels.Product product=find(w,p).orElseThrow();write(dir(w,p).resolve("composition.json"),new CompositionState(product.compositionVersion(),c));refresh(w);}
+ public Optional<ApiDtos.ProductCompositionView> composition(String w,String p){Path f=dir(w,p).resolve("composition.json");return Files.exists(f)?Optional.ofNullable(read(f,CompositionState.class).view):Optional.empty();}
+ private void refresh(String w){new com.architectureworkbench.workspace.FileWorkspaceIntegrityService(root).refreshManifest(com.architectureworkbench.workspace.WorkspaceId.of(w));}
+ private void write(Path f,Object v){try{Files.createDirectories(f.getParent());Path t=f.resolveSibling(f.getFileName()+".tmp");mapper.writerWithDefaultPrettyPrinter().writeValue(t.toFile(),v);try{Files.move(t,f,StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.ATOMIC_MOVE);}catch(AtomicMoveNotSupportedException e){Files.move(t,f,StandardCopyOption.REPLACE_EXISTING);}}catch(IOException e){throw new IllegalStateException("Unable to persist "+f,e);}}
+ private <T>T read(Path f,Class<T> t){try{return mapper.readValue(f.toFile(),t);}catch(IOException e){throw new IllegalStateException("Unable to read "+f,e);}}
+ private <T>List<T> readList(Path f,Class<T[]> t){return List.of(read(f,t));}
+ private record ProductHeader(ProductModels.ProductId id,String workspaceId,ProductModels.ProductName name,ProductModels.ProductDescription description,ProductModels.ProductStatus status,java.time.Instant createdAt,java.time.Instant updatedAt){}
+ private record CompositionState(ProductModels.ProductCompositionVersion version,ApiDtos.ProductCompositionView view){}
+}

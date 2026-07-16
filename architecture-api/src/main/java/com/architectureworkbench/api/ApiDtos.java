@@ -158,6 +158,38 @@ public final class ApiDtos {
     public record DiscoveryConfidenceView(double value, int percentage, String band, String rationale) {
     }
 
+    public record CreateProductRequest(String name, String description, String actorRef) {}
+    public record UpdateProductMetadataRequest(String name, String description, String status, String actorRef) {}
+    public record AddProductRepositoryRequest(String sourceIdentity, String sourceReference, String role, List<String> discoveryRunIds,
+                                              Map<String,String> versionMetadata, Map<String,String> ownershipMetadata, String actorRef) {}
+    public record AttachDiscoveryRunRequest(String discoveryRunId, String actorRef) {}
+    public record CreateProductModuleRequest(String name, String description, String type, String actorRef) {}
+    public record ProductView(String productId,String workspaceId,String name,String description,String status,long compositionVersion,
+                              Instant createdAt,Instant updatedAt,List<ProductRepositoryView> repositories,List<ProductModuleView> modules) {}
+    public record ProductRepositoryView(String repositoryId,String sourceIdentity,String sourceReference,String role,String moduleId,String status,
+                                        List<String> discoveryRunIds,Map<String,String> versionMetadata,Map<String,String> ownershipMetadata,Instant addedAt) {}
+    public record ProductModuleView(String moduleId,String name,String description,String type,Instant createdAt) {}
+    public record RepositoryEvidenceContribution(String repositoryId,String sourceIdentity,String discoveryRunId,int evidenceCount,int observationCount,int metricCount) {}
+    public record ProductEvidenceItem(String productEvidenceId,String repositoryId,String repositorySourceIdentity,String discoveryRunId,
+                                      DiscoveryEvidenceView evidence) {}
+    public record ProductObservationItem(String productObservationId,String repositoryId,String discoveryRunId,DiscoveryObservationView observation) {}
+    public record ProductMetricItem(String productMetricId,String repositoryId,String discoveryRunId,DiscoveryMetricView metric) {}
+    public record CrossRepositoryIdentity(String identityId,String identityType,String canonicalValue,String explicitVersion,String matchType,
+                                          double confidence,List<String> repositoryIds,List<String> productEvidenceIds) {}
+    public record IdentityConflict(String conflictId,String rule,String candidateValue,String explanation,double confidence,List<String> repositoryIds,List<String> productEvidenceIds) {}
+    public record ProductRelationshipView(String relationshipId,String type,String description,String sourceRepositoryId,String targetRepositoryId,
+                                          String technicalIdentity,double confidence,List<String> productEvidenceIds) {}
+    public record ProductCompositionDiagnostic(String diagnosticId,String severity,String message,List<String> repositoryIds,List<String> evidenceIds) {}
+    public record ProductCompositionMetrics(int repositoryCount,int productModuleCount,int discoveryRunCount,int evidenceCount,
+                                            int crossRepositoryRelationshipCount,int sharedContractCount,int sharedChannelCount,int unresolvedIdentityCount,
+                                            double ownershipMetadataCoverage,double explicitVersionMetadataCoverage,double repositoryModuleAssignmentCoverage) {}
+    public record ProductCompositionView(String productId,String workspaceId,long compositionVersion,Instant generatedAt,
+                                         List<RepositoryEvidenceContribution> contributions,List<ProductEvidenceItem> evidence,
+                                         List<ProductObservationItem> observations,List<ProductMetricItem> repositoryMetrics,
+                                         List<CrossRepositoryIdentity> identities,List<IdentityConflict> conflicts,
+                                         List<ProductRelationshipView> relationships,ProductCompositionMetrics metrics,
+                                         List<ProductCompositionDiagnostic> diagnostics) {}
+
     public record FindingResponse(
             String id,
             String severity,

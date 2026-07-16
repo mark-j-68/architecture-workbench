@@ -20,6 +20,8 @@ import type {
   ReviewBoardSessionResponse,
   RunLocalDiscoveryRequest,
   WorkspaceResponse,
+  ProductView,
+  ProductCompositionView,
 } from './architectureApiTypes'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
@@ -56,6 +58,12 @@ function query(path: string, filters: Record<string, string | number | undefined
 export const architectureApi = {
   createWorkspace: (body: CreateWorkspaceRequest) => post<WorkspaceResponse>('/api/workspaces', body),
   listWorkspaces: () => request<WorkspaceResponse[]>('/api/workspaces'),
+  createProduct: (workspaceId:string, body:{name:string;description:string;actorRef:string}) => post<ProductView>(`/api/workspaces/${workspaceId}/products`,body),
+  listProducts: (workspaceId:string) => request<ProductView[]>(`/api/workspaces/${workspaceId}/products`),
+  addProductRepository: (workspaceId:string,productId:string,body:unknown) => post<ProductView>(`/api/workspaces/${workspaceId}/products/${productId}/repositories`,body),
+  createProductModule: (workspaceId:string,productId:string,body:unknown) => post<ProductView>(`/api/workspaces/${workspaceId}/products/${productId}/modules`,body),
+  assignProductRepository: (workspaceId:string,productId:string,moduleId:string,repositoryId:string) => post<ProductView>(`/api/workspaces/${workspaceId}/products/${productId}/modules/${moduleId}/repositories/${repositoryId}?actorRef=ui-user`,{}),
+  composeProduct: (workspaceId:string,productId:string) => post<ProductCompositionView>(`/api/workspaces/${workspaceId}/products/${productId}/compose?actorRef=ui-user`,{}),
   getWorkspaceGraph: (workspaceId: string) => request<GraphResponse>(`/api/workspaces/${workspaceId}/graph`),
   runLocalDiscovery: (workspaceId: string, body: RunLocalDiscoveryRequest) =>
     post<DiscoveryRunResponse>(`/api/workspaces/${workspaceId}/discovery/local`, body),

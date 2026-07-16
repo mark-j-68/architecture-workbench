@@ -145,6 +145,15 @@ public class FileWorkspaceIntegrityService {
                 throw new IllegalStateException("Unable to enumerate discovery run files in " + directory, exception);
             }
         }
+        Path products = directory.resolve("products");
+        if (Files.isDirectory(products)) {
+            try (java.util.stream.Stream<Path> paths = Files.walk(products)) {
+                paths.filter(Files::isRegularFile).filter(path -> path.getFileName().toString().endsWith(".json"))
+                        .map(directory::relativize).map(path -> path.toString().replace('\\', '/')).sorted().forEach(files::add);
+            } catch (IOException exception) {
+                throw new IllegalStateException("Unable to enumerate product files in " + directory, exception);
+            }
+        }
         return List.copyOf(files);
     }
 

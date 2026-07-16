@@ -12,6 +12,7 @@ import type {
 } from '../../api/architectureApiTypes'
 import { ArchitectureGraphExplorer } from '../graph/ArchitectureGraphExplorer'
 import { DiscoveryRunsExplorer } from '../discovery/DiscoveryRunsExplorer'
+import { ProductWorkspace } from '../products/ProductWorkspace'
 import { graphResponseToViewModel, projectionResponseToViewModel } from './workflowViewModels'
 import './workflow.css'
 
@@ -33,7 +34,7 @@ export function ArchitectureWorkflowShell() {
   const [projection, setProjection] = useState<ProjectionResponse | null>(null)
   const [busy, setBusy] = useState('')
   const [message, setMessage] = useState('')
-  const [workspaceView, setWorkspaceView] = useState<'discovery' | 'architecture'>('discovery')
+  const [workspaceView, setWorkspaceView] = useState<'products' | 'discovery' | 'architecture'>('products')
 
   useEffect(() => {
     refreshWorkspaces().catch(showError)
@@ -174,7 +175,7 @@ export function ArchitectureWorkflowShell() {
           <p>Architecture OS workflow adapter</p>
         </div>
         <div className="header-actions">
-          <div className="view-switcher"><button className={workspaceView === 'discovery' ? 'active' : ''} onClick={() => setWorkspaceView('discovery')}>Discovery Evidence</button><button className={workspaceView === 'architecture' ? 'active' : ''} onClick={() => setWorkspaceView('architecture')}>Architecture Workflow</button></div>
+          <div className="view-switcher"><button className={workspaceView === 'products' ? 'active' : ''} onClick={() => setWorkspaceView('products')}>Products</button><button className={workspaceView === 'discovery' ? 'active' : ''} onClick={() => setWorkspaceView('discovery')}>Discovery Evidence</button><button className={workspaceView === 'architecture' ? 'active' : ''} onClick={() => setWorkspaceView('architecture')}>Architecture Workflow</button></div>
           <div className="status-strip"><span>{busy || message || 'Ready'}</span></div>
         </div>
       </header>
@@ -240,7 +241,7 @@ export function ArchitectureWorkflowShell() {
             </div>}
           </section>
 
-          {workspaceView === 'discovery' ? <DiscoveryRunsExplorer workspaceId={selectedWorkspaceId} actorRef={ACTOR} onStatus={setMessage} /> : <>
+          {workspaceView === 'products' ? <ProductWorkspace workspaceId={selectedWorkspaceId} onStatus={setMessage} /> : workspaceView === 'discovery' ? <DiscoveryRunsExplorer workspaceId={selectedWorkspaceId} actorRef={ACTOR} onStatus={setMessage} /> : <>
           <div className="results-grid">
             <section className="panel">
               <h2>Discovery Results</h2>
