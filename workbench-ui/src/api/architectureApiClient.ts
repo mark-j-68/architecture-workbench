@@ -22,6 +22,7 @@ import type {
   WorkspaceResponse,
   ProductView,
   ProductCompositionView,
+  ProductDependencyCompositionView,
 } from './architectureApiTypes'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
@@ -64,6 +65,7 @@ export const architectureApi = {
   createProductModule: (workspaceId:string,productId:string,body:unknown) => post<ProductView>(`/api/workspaces/${workspaceId}/products/${productId}/modules`,body),
   assignProductRepository: (workspaceId:string,productId:string,moduleId:string,repositoryId:string) => post<ProductView>(`/api/workspaces/${workspaceId}/products/${productId}/modules/${moduleId}/repositories/${repositoryId}?actorRef=ui-user`,{}),
   composeProduct: (workspaceId:string,productId:string) => post<ProductCompositionView>(`/api/workspaces/${workspaceId}/products/${productId}/compose?actorRef=ui-user`,{}),
+  composeProductDependencies: (workspaceId:string,productId:string) => post<ProductDependencyCompositionView>(`/api/workspaces/${workspaceId}/products/${productId}/dependencies/compose?actorRef=ui-user`,{}),
   getWorkspaceGraph: (workspaceId: string) => request<GraphResponse>(`/api/workspaces/${workspaceId}/graph`),
   runLocalDiscovery: (workspaceId: string, body: RunLocalDiscoveryRequest) =>
     post<DiscoveryRunResponse>(`/api/workspaces/${workspaceId}/discovery/local`, body),

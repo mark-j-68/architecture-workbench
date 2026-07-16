@@ -100,6 +100,11 @@ class KernelConfiguration {
     }
 
     @Bean
+    ProductDependencyAnalysisService productDependencyAnalysisService(ProductRepositoryStore products, AuditSink auditSink) {
+        return new ProductDependencyAnalysisService(products, auditSink);
+    }
+
+    @Bean
     DiscoveryPluginPipeline discoveryPluginPipeline() {
         return new DiscoveryPluginPipeline();
     }

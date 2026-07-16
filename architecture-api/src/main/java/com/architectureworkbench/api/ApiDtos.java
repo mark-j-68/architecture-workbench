@@ -190,6 +190,36 @@ public final class ApiDtos {
                                          List<ProductRelationshipView> relationships,ProductCompositionMetrics metrics,
                                          List<ProductCompositionDiagnostic> diagnostics) {}
 
+    public record DependencyEvidenceReference(String repositoryId,String discoveryRunId,String productEvidenceId,String evidenceId,
+                                              String pluginId,String filePath,String symbol) {}
+    public record ProductDependencyView(String dependencyId,String dependencyType,String direction,String status,
+                                        String sourceRepositoryId,String targetRepositoryId,String technicalIdentity,
+                                        String sourceVersion,String targetVersion,String compatibilityStatus,double confidence,
+                                        String classification,String derivationSummary,List<DependencyEvidenceReference> evidence) {}
+    public record DependencyGraphNode(String nodeId,String nodeType,String label,String repositoryId,String moduleId,String owner) {}
+    public record DependencyGraphEdge(String edgeId,String sourceNodeId,String targetNodeId,String dependencyType,String label,
+                                      String compatibilityStatus,double confidence,List<String> evidenceIds) {}
+    public record ProductDependencyGraph(List<DependencyGraphNode> nodes,List<DependencyGraphEdge> edges) {}
+    public record ContractCompatibilityView(String compatibilityId,String sourceRepositoryId,String targetRepositoryId,String contractIdentity,
+                                            String producerVersion,String consumerVersion,String status,String explanation,double confidence,
+                                            List<DependencyEvidenceReference> evidence) {}
+    public record RepositoryCompatibilityCell(String sourceRepositoryId,String targetRepositoryId,String status,int relationshipCount,List<String> compatibilityIds) {}
+    public record RepositoryCompatibilityMatrix(List<String> repositoryIds,List<RepositoryCompatibilityCell> cells) {}
+    public record ReleaseRelationshipView(String relationshipId,String type,String sourceRepositoryId,String targetRepositoryId,String description,
+                                          String sourceVersion,String targetVersion,double confidence,List<DependencyEvidenceReference> evidence) {}
+    public record OwnershipRelationshipView(String relationshipId,String type,String repositoryId,String relatedRepositoryId,String owner,
+                                            String description,double confidence,List<DependencyEvidenceReference> evidence) {}
+    public record CompatibilityDiagnostic(String diagnosticId,String severity,String status,String message,List<String> repositoryIds,List<String> evidenceIds) {}
+    public record ProductDependencyMetrics(int dependencyCount,int apiDependencyCount,int eventDependencyCount,int commandDependencyCount,
+                                           int sharedArtifactCount,int sharedChannelCount,double explicitCompatibilityCoverage,
+                                           int unknownCompatibilityCount,int explicitIncompatibilityCount,int releaseAssociationCount,
+                                           int coordinatedReleaseEvidenceCount,int deploymentDependencyCount,int ownershipConflictCount,int ownerlessContractCount) {}
+    public record ProductDependencyCompositionView(String productId,String workspaceId,long compositionVersion,Instant generatedAt,String correlationId,
+                                                   List<String> inputDiscoveryRunIds,List<ProductDependencyView> dependencies,
+                                                   List<ContractCompatibilityView> compatibility,List<ReleaseRelationshipView> releaseRelationships,
+                                                   List<ProductDependencyView> deploymentRelationships,List<OwnershipRelationshipView> ownershipRelationships,
+                                                   ProductDependencyGraph graph,ProductDependencyMetrics metrics,List<CompatibilityDiagnostic> diagnostics) {}
+
     public record FindingResponse(
             String id,
             String severity,

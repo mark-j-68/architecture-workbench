@@ -24,7 +24,11 @@ public enum ArchitectureEventType {
     PRODUCT_REPOSITORY_REMOVED("ProductRepositoryRemoved"),
     PRODUCT_MODULE_CREATED("ProductModuleCreated"),
     PRODUCT_REPOSITORY_ASSIGNED_TO_MODULE("ProductRepositoryAssignedToModule"),
-    PRODUCT_COMPOSITION_GENERATED("ProductCompositionGenerated");
+    PRODUCT_COMPOSITION_GENERATED("ProductCompositionGenerated"),
+    PRODUCT_DEPENDENCY_COMPOSITION_STARTED("ProductDependencyCompositionStarted"),
+    PRODUCT_DEPENDENCY_COMPOSITION_COMPLETED("ProductDependencyCompositionCompleted"),
+    PRODUCT_COMPATIBILITY_EVALUATED("ProductCompatibilityEvaluated"),
+    PRODUCT_COMPOSITION_VERSION_CREATED("ProductCompositionVersionCreated");
 
     private final String eventName;
 
