@@ -14,4 +14,6 @@ interface ProductRepositoryStore {
     void saveArchitectureAnalysis(String workspaceId,String productId,ApiDtos.ProductArchitectureAnalysisView analysis);
     Optional<ApiDtos.ProductArchitectureAnalysisView> architectureAnalysis(String workspaceId,String productId);
     List<ApiDtos.ProductArchitectureAnalysisView> architectureAnalyses(String workspaceId,String productId);
+    void saveRecommendationGeneration(String workspaceId,String productId,ApiDtos.ProductRecommendationGenerationView generation);
+    List<ApiDtos.ProductRecommendationGenerationView> recommendationGenerations(String workspaceId,String productId);
 }

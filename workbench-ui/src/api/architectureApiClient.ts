@@ -24,6 +24,8 @@ import type {
   ProductCompositionView,
   ProductDependencyCompositionView,
   ProductArchitectureAnalysisView,
+  ProductArchitectureRecommendationView,
+  ProductRecommendationGenerationView,
 } from './architectureApiTypes'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
@@ -69,6 +71,10 @@ export const architectureApi = {
   composeProductDependencies: (workspaceId:string,productId:string) => post<ProductDependencyCompositionView>(`/api/workspaces/${workspaceId}/products/${productId}/dependencies/compose?actorRef=ui-user`,{}),
   analyseProductArchitecture: (workspaceId:string,productId:string) => post<ProductArchitectureAnalysisView>(`/api/workspaces/${workspaceId}/products/${productId}/analysis?actorRef=ui-user`,{}),
   getProductAnalysisHistory: (workspaceId:string,productId:string) => request<ProductArchitectureAnalysisView[]>(`/api/workspaces/${workspaceId}/products/${productId}/analysis-history`),
+  generateProductRecommendations: (workspaceId:string,productId:string) => post<ProductRecommendationGenerationView>(`/api/workspaces/${workspaceId}/products/${productId}/recommendations/generate?actorRef=ui-user`,{}),
+  listProductRecommendations: (workspaceId:string,productId:string) => request<ProductArchitectureRecommendationView[]>(`/api/workspaces/${workspaceId}/products/${productId}/recommendations`),
+  submitProductRecommendation: (workspaceId:string,productId:string,id:string) => post<ProductArchitectureRecommendationView>(`/api/workspaces/${workspaceId}/products/${productId}/recommendations/${id}/submit-review`,{actorRef:'ui-user',rationale:'Submitted from Product workspace'}),
+  createProductProposedChange: (workspaceId:string,productId:string,id:string) => post<{proposedChangeId:string;boundary:string}>(`/api/workspaces/${workspaceId}/products/${productId}/recommendations/${id}/create-proposed-change`,{actorRef:'ui-user',rationale:'Explicitly requested from recommendation'}),
   getWorkspaceGraph: (workspaceId: string) => request<GraphResponse>(`/api/workspaces/${workspaceId}/graph`),
   runLocalDiscovery: (workspaceId: string, body: RunLocalDiscoveryRequest) =>
     post<DiscoveryRunResponse>(`/api/workspaces/${workspaceId}/discovery/local`, body),

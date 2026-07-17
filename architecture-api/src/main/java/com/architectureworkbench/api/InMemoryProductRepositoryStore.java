@@ -2,7 +2,7 @@ package com.architectureworkbench.api;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 final class InMemoryProductRepositoryStore implements ProductRepositoryStore {
- private final Map<String,ProductModels.Product> products=new ConcurrentHashMap<>(); private final Map<String,ApiDtos.ProductCompositionView> compositions=new ConcurrentHashMap<>(); private final Map<String,List<ApiDtos.ProductDependencyCompositionView>> dependencies=new ConcurrentHashMap<>(); private final Map<String,List<ApiDtos.ProductArchitectureAnalysisView>> analyses=new ConcurrentHashMap<>();
+ private final Map<String,ProductModels.Product> products=new ConcurrentHashMap<>(); private final Map<String,ApiDtos.ProductCompositionView> compositions=new ConcurrentHashMap<>(); private final Map<String,List<ApiDtos.ProductDependencyCompositionView>> dependencies=new ConcurrentHashMap<>(); private final Map<String,List<ApiDtos.ProductArchitectureAnalysisView>> analyses=new ConcurrentHashMap<>(); private final Map<String,List<ApiDtos.ProductRecommendationGenerationView>> recommendations=new ConcurrentHashMap<>();
  private String key(String w,String p){return w+"/"+p;}
  public ProductModels.Product save(ProductModels.Product p){products.put(key(p.workspaceId(),p.id().value()),p);return p;}
  public Optional<ProductModels.Product> find(String w,String p){return Optional.ofNullable(products.get(key(w,p)));}
@@ -16,4 +16,6 @@ final class InMemoryProductRepositoryStore implements ProductRepositoryStore {
  public void saveArchitectureAnalysis(String w,String p,ApiDtos.ProductArchitectureAnalysisView a){analyses.compute(key(w,p),(k,v)->{var n=new ArrayList<>(v==null?List.<ApiDtos.ProductArchitectureAnalysisView>of():v);n.add(a);return List.copyOf(n);});}
  public Optional<ApiDtos.ProductArchitectureAnalysisView> architectureAnalysis(String w,String p){var a=architectureAnalyses(w,p);return a.isEmpty()?Optional.empty():Optional.of(a.get(a.size()-1));}
  public List<ApiDtos.ProductArchitectureAnalysisView> architectureAnalyses(String w,String p){return analyses.getOrDefault(key(w,p),List.of());}
+ public void saveRecommendationGeneration(String w,String p,ApiDtos.ProductRecommendationGenerationView g){recommendations.compute(key(w,p),(k,v)->{var n=new ArrayList<>(v==null?List.<ApiDtos.ProductRecommendationGenerationView>of():v);n.removeIf(x->x.generationId().equals(g.generationId()));n.add(g);return List.copyOf(n);});}
+ public List<ApiDtos.ProductRecommendationGenerationView> recommendationGenerations(String w,String p){return recommendations.getOrDefault(key(w,p),List.of());}
 }

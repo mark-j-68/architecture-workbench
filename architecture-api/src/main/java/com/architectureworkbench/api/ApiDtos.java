@@ -242,6 +242,27 @@ public final class ApiDtos {
                                                    ProductDistributedMonolithAssessment assessment,
                                                    List<ProductArchitectureAnalysisDiagnostic> diagnostics) {}
 
+    public record RecommendationTradeoffView(String benefit,String cost,String risk) {}
+    public record RecommendationAlternativeView(String alternativeId,String title,String description,String impact,String effort,
+                                                  String deliveryRisk,String operationalRisk,List<String> prerequisites,
+                                                  List<RecommendationTradeoffView> tradeoffs,String applicability,double confidence) {}
+    public record ProductArchitectureRecommendationView(String recommendationId,String deterministicKey,String productId,String workspaceId,
+                                                         String analysisId,long compositionVersion,String title,String category,String status,
+                                                         String priority,String timeHorizon,String confidence,double confidenceScore,
+                                                         List<String> concerns,List<String> supportingFindingIds,List<String> supportingIndicatorIds,
+                                                         List<String> evidenceIds,List<String> repositoryIds,List<String> moduleIds,
+                                                         List<String> counterEvidence,String rationale,List<RecommendationAlternativeView> alternatives,
+                                                         String impact,String effort,List<String> risks,List<String> preconditions,
+                                                         List<String> expectedOutcomes,List<String> successMeasures,List<String> limitations,
+                                                         int recurrenceCount,String supersedesRecommendationId,String reviewSessionId,
+                                                         String proposedChangeId,Instant generatedAt,Instant updatedAt) {}
+    public record ProductRecommendationGenerationView(String generationId,String productId,String analysisId,long compositionVersion,
+                                                        String correlationId,Instant generatedAt,List<ProductArchitectureRecommendationView> recommendations,
+                                                        List<String> diagnostics) {}
+    public record RecommendationActionRequest(String actorRef,String rationale) {}
+    public record RecommendationProposedChangeView(String proposedChangeId,String recommendationId,String status,String boundary,
+                                                    List<String> findingIds,List<String> evidenceIds,Instant createdAt) {}
+
     public record FindingResponse(
             String id,
             String severity,

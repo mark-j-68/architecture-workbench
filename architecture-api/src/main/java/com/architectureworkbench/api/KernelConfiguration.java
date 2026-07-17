@@ -110,6 +110,11 @@ class KernelConfiguration {
     }
 
     @Bean
+    ProductArchitectureRecommendationService productArchitectureRecommendationService(ProductRepositoryStore products, AuditSink auditSink) {
+        return new ProductArchitectureRecommendationService(products, auditSink);
+    }
+
+    @Bean
     DiscoveryPluginPipeline discoveryPluginPipeline() {
         return new DiscoveryPluginPipeline();
     }

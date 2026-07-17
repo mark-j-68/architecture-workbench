@@ -30,6 +30,10 @@ public enum ArchitectureEventType {
     PRODUCT_ARCHITECTURE_ANALYSIS_COMPLETED("ProductArchitectureAnalysisCompleted"),
     PRODUCT_ARCHITECTURE_FINDING_CREATED("ProductArchitectureFindingCreated"),
     PRODUCT_DISTRIBUTED_MONOLITH_ASSESSMENT_COMPLETED("ProductDistributedMonolithAssessmentCompleted"),
+    PRODUCT_RECOMMENDATION_GENERATION_STARTED("ProductRecommendationGenerationStarted"),
+    PRODUCT_RECOMMENDATION_GENERATED("ProductRecommendationGenerated"),
+    PRODUCT_RECOMMENDATION_SUBMITTED_FOR_REVIEW("ProductRecommendationSubmittedForReview"),
+    PRODUCT_RECOMMENDATION_STATUS_CHANGED("ProductRecommendationStatusChanged"),
     PRODUCT_DEPENDENCY_COMPOSITION_COMPLETED("ProductDependencyCompositionCompleted"),
     PRODUCT_COMPATIBILITY_EVALUATED("ProductCompatibilityEvaluated"),
     PRODUCT_COMPOSITION_VERSION_CREATED("ProductCompositionVersionCreated");
