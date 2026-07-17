@@ -220,6 +220,28 @@ public final class ApiDtos {
                                                    List<ProductDependencyView> deploymentRelationships,List<OwnershipRelationshipView> ownershipRelationships,
                                                    ProductDependencyGraph graph,ProductDependencyMetrics metrics,List<CompatibilityDiagnostic> diagnostics) {}
 
+    public record ProductArchitectureIndicatorView(String indicatorId,String type,String description,double confidence,
+                                                    List<String> dependencyIds,List<String> evidenceIds,List<String> repositoryIds,
+                                                    List<String> moduleIds,List<String> dependencyPath) {}
+    public record ProductArchitectureFindingView(String findingId,String findingType,String polarity,String title,String description,
+                                                  String concern,String severity,String confidence,double confidenceScore,
+                                                  List<ProductArchitectureIndicatorView> indicators,List<String> supportingObservationIds,
+                                                  List<String> supportingEvidenceIds,List<String> repositoryIds,List<String> moduleIds,
+                                                  List<List<String>> dependencyPaths,String derivationSummary,List<String> counterEvidence,
+                                                  List<String> limitations,long compositionVersion,Instant generatedAt) {}
+    public record ProductArchitectureAnalysisDiagnostic(String diagnosticId,String severity,String message,List<String> missingEvidence) {}
+    public record ProductDistributedMonolithAssessment(String assessmentId,String productId,long compositionVersion,String status,
+                                                        String classification,String confidence,double confidenceScore,
+                                                        int evidenceCoverage,List<ProductArchitectureIndicatorView> indicatorSummary,
+                                                        List<String> strengthFindingIds,List<String> riskFindingIds,
+                                                        List<ProductArchitectureAnalysisDiagnostic> diagnostics,List<String> missingEvidence,
+                                                        Instant generatedAt) {}
+    public record ProductArchitectureAnalysisView(String analysisId,String productId,String workspaceId,long compositionVersion,String status,
+                                                   Instant startedAt,Instant completedAt,String correlationId,
+                                                   List<ProductArchitectureFindingView> findings,
+                                                   ProductDistributedMonolithAssessment assessment,
+                                                   List<ProductArchitectureAnalysisDiagnostic> diagnostics) {}
+
     public record FindingResponse(
             String id,
             String severity,

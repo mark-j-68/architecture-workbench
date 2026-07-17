@@ -105,6 +105,11 @@ class KernelConfiguration {
     }
 
     @Bean
+    ProductArchitectureAnalysisService productArchitectureAnalysisService(ProductRepositoryStore products, AuditSink auditSink) {
+        return new ProductArchitectureAnalysisService(products, auditSink);
+    }
+
+    @Bean
     DiscoveryPluginPipeline discoveryPluginPipeline() {
         return new DiscoveryPluginPipeline();
     }

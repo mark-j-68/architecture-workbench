@@ -26,6 +26,10 @@ public enum ArchitectureEventType {
     PRODUCT_REPOSITORY_ASSIGNED_TO_MODULE("ProductRepositoryAssignedToModule"),
     PRODUCT_COMPOSITION_GENERATED("ProductCompositionGenerated"),
     PRODUCT_DEPENDENCY_COMPOSITION_STARTED("ProductDependencyCompositionStarted"),
+    PRODUCT_ARCHITECTURE_ANALYSIS_STARTED("ProductArchitectureAnalysisStarted"),
+    PRODUCT_ARCHITECTURE_ANALYSIS_COMPLETED("ProductArchitectureAnalysisCompleted"),
+    PRODUCT_ARCHITECTURE_FINDING_CREATED("ProductArchitectureFindingCreated"),
+    PRODUCT_DISTRIBUTED_MONOLITH_ASSESSMENT_COMPLETED("ProductDistributedMonolithAssessmentCompleted"),
     PRODUCT_DEPENDENCY_COMPOSITION_COMPLETED("ProductDependencyCompositionCompleted"),
     PRODUCT_COMPATIBILITY_EVALUATED("ProductCompatibilityEvaluated"),
     PRODUCT_COMPOSITION_VERSION_CREATED("ProductCompositionVersionCreated");

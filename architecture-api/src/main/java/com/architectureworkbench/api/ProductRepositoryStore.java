@@ -11,4 +11,7 @@ interface ProductRepositoryStore {
     void saveDependencyComposition(String workspaceId,String productId,ApiDtos.ProductDependencyCompositionView composition);
     Optional<ApiDtos.ProductDependencyCompositionView> dependencyComposition(String workspaceId,String productId);
     List<ApiDtos.ProductDependencyCompositionView> dependencyCompositions(String workspaceId,String productId);
+    void saveArchitectureAnalysis(String workspaceId,String productId,ApiDtos.ProductArchitectureAnalysisView analysis);
+    Optional<ApiDtos.ProductArchitectureAnalysisView> architectureAnalysis(String workspaceId,String productId);
+    List<ApiDtos.ProductArchitectureAnalysisView> architectureAnalyses(String workspaceId,String productId);
 }

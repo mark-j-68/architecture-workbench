@@ -23,6 +23,7 @@ import type {
   ProductView,
   ProductCompositionView,
   ProductDependencyCompositionView,
+  ProductArchitectureAnalysisView,
 } from './architectureApiTypes'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
@@ -66,6 +67,8 @@ export const architectureApi = {
   assignProductRepository: (workspaceId:string,productId:string,moduleId:string,repositoryId:string) => post<ProductView>(`/api/workspaces/${workspaceId}/products/${productId}/modules/${moduleId}/repositories/${repositoryId}?actorRef=ui-user`,{}),
   composeProduct: (workspaceId:string,productId:string) => post<ProductCompositionView>(`/api/workspaces/${workspaceId}/products/${productId}/compose?actorRef=ui-user`,{}),
   composeProductDependencies: (workspaceId:string,productId:string) => post<ProductDependencyCompositionView>(`/api/workspaces/${workspaceId}/products/${productId}/dependencies/compose?actorRef=ui-user`,{}),
+  analyseProductArchitecture: (workspaceId:string,productId:string) => post<ProductArchitectureAnalysisView>(`/api/workspaces/${workspaceId}/products/${productId}/analysis?actorRef=ui-user`,{}),
+  getProductAnalysisHistory: (workspaceId:string,productId:string) => request<ProductArchitectureAnalysisView[]>(`/api/workspaces/${workspaceId}/products/${productId}/analysis-history`),
   getWorkspaceGraph: (workspaceId: string) => request<GraphResponse>(`/api/workspaces/${workspaceId}/graph`),
   runLocalDiscovery: (workspaceId: string, body: RunLocalDiscoveryRequest) =>
     post<DiscoveryRunResponse>(`/api/workspaces/${workspaceId}/discovery/local`, body),
