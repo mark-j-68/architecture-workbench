@@ -169,6 +169,23 @@ canonical product boundary.
 
 ## Release 0.3 Outcome
 
+Release 0.3.5 adds a deterministic, historical Product Architecture Scorecard over retained Product analysis. See [Product Architecture Scorecard](PRODUCT-ARCHITECTURE-SCORECARD.md) and [ADR-045](../adr/ADR-045-deterministic-partial-product-scorecards.md). It exposes only measured dimensions and withholds an aggregate when evidence is insufficient. It does not alter recommendation governance.
+
+Release 0.3.6 integrates the Product workflow with the existing Review Board and Architecture Knowledge Graph proposed-change boundary. A Product recommendation remains the retained source record. An API-boundary adapter presents its findings and evidence as the existing Architecture Intelligence Model types required by Review Board; it does not create a second recommendation concept. Submission opens a real Review Board session, votes and decisions are retained as immutable Product review snapshots, and recommendation lifecycle transitions are appended rather than replacing history. [ADR-046](../adr/ADR-046-adapt-product-recommendations-at-governance-boundary.md) records this boundary and the distinction between recommendation approval and graph-change acceptance.
+
+The integrated lifecycle is:
+
+```text
+Candidate → Submitted → Under Review → Approved / Rejected / Deferred
+          → explicit Proposed Change → explicit acceptance → graph mutation
+```
+
+Approval does not create or accept a graph mutation. After approval, the user must choose a concrete supported graph element type, name, and description. The Workbench then creates an actual `ProposedArchitectureChange` through `ProposedChangeService`, carrying the recommendation, finding, evidence, analysis, Product, repository, discovery-run, Review Board session, and workspace references. Acceptance remains a separate command through the established proposed-change API and is the only Product lifecycle action that mutates the canonical graph.
+
+Scorecards remain read-only snapshots. A scorecard is neither an input to Review Board decision derivation nor a gate for proposed-change creation.
+
+Release 0.3 remains limited to local repository discovery, file or in-memory persistence, deterministic analysis, human/stub Review Board participants, and element-addition proposals from Product recommendations. It does not add live model providers, remote Git integrations, PostgreSQL, vector memory, event sourcing, semantic bounded-context inference, or autonomous change application.
+
 Release 0.3 should make Architecture Workbench capable of answering:
 
 1. How do we analyze an existing product consisting of multiple repositories?

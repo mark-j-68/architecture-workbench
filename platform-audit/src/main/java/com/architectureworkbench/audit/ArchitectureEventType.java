@@ -34,6 +34,10 @@ public enum ArchitectureEventType {
     PRODUCT_RECOMMENDATION_GENERATED("ProductRecommendationGenerated"),
     PRODUCT_RECOMMENDATION_SUBMITTED_FOR_REVIEW("ProductRecommendationSubmittedForReview"),
     PRODUCT_RECOMMENDATION_STATUS_CHANGED("ProductRecommendationStatusChanged"),
+    PRODUCT_RECOMMENDATION_REVIEW_DECIDED("ProductRecommendationReviewDecided"),
+    PRODUCT_RECOMMENDATION_PROPOSED_CHANGE_CREATED("ProductRecommendationProposedChangeCreated"),
+    PRODUCT_RECOMMENDATION_ARCHITECTURE_CHANGE_ACCEPTED("ProductRecommendationArchitectureChangeAccepted"),
+    PRODUCT_SCORECARD_GENERATED("ProductScorecardGenerated"),
     PRODUCT_DEPENDENCY_COMPOSITION_COMPLETED("ProductDependencyCompositionCompleted"),
     PRODUCT_COMPATIBILITY_EVALUATED("ProductCompatibilityEvaluated"),
     PRODUCT_COMPOSITION_VERSION_CREATED("ProductCompositionVersionCreated");

@@ -115,6 +115,20 @@ class KernelConfiguration {
     }
 
     @Bean
+    ProductScorecardService productScorecardService(ProductRepositoryStore products, AuditSink auditSink) {
+        return new ProductScorecardService(products, auditSink);
+    }
+
+    @Bean
+    ProductReviewBoardService productReviewBoardService(ProductRepositoryStore products,
+            ProductArchitectureRecommendationService recommendations, ReviewBoardWorkflowService reviews,
+            ReviewBoardSessionStore reviewStore, ProposedChangeService proposedChanges,
+            ProposedChangeRepository proposedStore, WorkspaceService workspaces, AuditSink auditSink) {
+        return new ProductReviewBoardService(products, recommendations, reviews, reviewStore,
+                proposedChanges, proposedStore, workspaces, auditSink);
+    }
+
+    @Bean
     DiscoveryPluginPipeline discoveryPluginPipeline() {
         return new DiscoveryPluginPipeline();
     }

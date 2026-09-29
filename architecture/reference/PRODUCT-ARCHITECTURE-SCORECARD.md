@@ -242,3 +242,13 @@ The scorecard should produce:
 Low scores do not automatically mutate the graph or create decisions. They
 produce findings, recommendations, proposed changes, and evidence packs for
 Review Board workflow.
+
+## Release 0.3.5 implementation
+
+Release 0.3.5 provides retained, read-only score snapshots over the latest deterministic Product analysis. It follows [ADR-045](../adr/ADR-045-deterministic-partial-product-scorecards.md). Each snapshot links its source analysis and composition version, metric findings and evidence, and recommendation metadata from that same analysis. Recommendation status only contributes to confidence after Review Board approval or a later governed lifecycle state; submission and voting alone do not validate it. Generating a scorecard changes no recommendation or Review Board state and never influences a Review Board decision automatically.
+
+The twelve design dimensions and their weights are present. Dimensions without mapped deterministic findings are **unscored**, with zero confidence. In particular, semantic bounded-context cohesion and architecture drift have no supported indicators yet. The aggregate is withheld until at least half the design weight is measured and the analysis reports at least 50 percent evidence coverage. Any displayed aggregate is marked partial unless all dimensions are measured; measured weight and confidence are displayed separately.
+
+Dimension scores use a neutral 50 reference, adding confidence-weighted strength severity and subtracting confidence-weighted risk severity. This is a transparent comparison index, not a compliance grade. The suggested confidence formula is implemented with available proxies: analysis coverage, mean finding confidence, analysis age, distinct evidence count, and already validated recommendation status. Analysis age does not prove source recency, and distinct evidence identifiers do not prove independent sources.
+
+`POST /api/workspaces/{workspaceId}/products/{productId}/scorecards` creates a snapshot. `GET` on the same path lists history; `GET .../scorecards/latest` and `GET .../scorecards/{scorecardId}` retrieve snapshots. File storage retains each snapshot under the Product's `scorecards/` directory, with `scorecard.json` as the latest view. Both participate in workspace integrity manifests. The Product UI shows the latest snapshot, historical selection, metric scores or unscored state, confidence, trends, and source IDs.

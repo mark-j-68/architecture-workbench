@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.architectureworkbench</groupId>
   <artifactId>agent-collaboration</artifactId>
-  <version>0.3.0-SNAPSHOT</version>
+  <version>0.3.0</version>
   <name>Agent Collaboration</name>
   <properties>
     <maven.compiler.release>21</maven.compiler.release>
@@ -15,7 +15,7 @@
     <dependency>
       <groupId>com.architectureworkbench</groupId>
       <artifactId>platform-audit</artifactId>
-      <version>0.3.0-SNAPSHOT</version>
+      <version>0.3.0</version>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>

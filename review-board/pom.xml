@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.architectureworkbench</groupId>
   <artifactId>review-board</artifactId>
-  <version>0.3.0-SNAPSHOT</version>
+  <version>0.3.0</version>
   <name>Review Board</name>
   <properties>
     <maven.compiler.release>21</maven.compiler.release>
@@ -15,22 +15,22 @@
     <dependency>
       <groupId>com.architectureworkbench</groupId>
       <artifactId>platform-audit</artifactId>
-      <version>0.3.0-SNAPSHOT</version>
+      <version>0.3.0</version>
     </dependency>
     <dependency>
       <groupId>com.architectureworkbench</groupId>
       <artifactId>architecture-knowledge-graph</artifactId>
-      <version>0.3.0-SNAPSHOT</version>
+      <version>0.3.0</version>
     </dependency>
     <dependency>
       <groupId>com.architectureworkbench</groupId>
       <artifactId>agent-collaboration</artifactId>
-      <version>0.3.0-SNAPSHOT</version>
+      <version>0.3.0</version>
     </dependency>
     <dependency>
       <groupId>com.architectureworkbench</groupId>
       <artifactId>architecture-intelligence</artifactId>
-      <version>0.3.0-SNAPSHOT</version>
+      <version>0.3.0</version>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>

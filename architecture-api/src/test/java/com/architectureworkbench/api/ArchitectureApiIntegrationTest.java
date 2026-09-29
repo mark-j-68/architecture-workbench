@@ -21,6 +21,7 @@ import com.architectureworkbench.api.ApiDtos.RecommendationResponse;
 import com.architectureworkbench.api.ApiDtos.ReviewBoardParticipantRequest;
 import com.architectureworkbench.api.ApiDtos.ReviewBoardSessionResponse;
 import com.architectureworkbench.api.ApiDtos.WorkspaceResponse;
+import com.architectureworkbench.audit.AuditSink;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -52,6 +53,12 @@ class ArchitectureApiIntegrationTest {
 
     @Autowired
     ObjectMapper objectMapper;
+
+    @Autowired
+    ProductRepositoryStore productStore;
+
+    @Autowired
+    AuditSink auditSink;
 
     @TempDir
     Path tempDir;
@@ -222,6 +229,128 @@ class ArchitectureApiIntegrationTest {
         assertEquals(run.summary().runId(), composition.evidence().getFirst().discoveryRunId());
         assertEquals(1, getList("/api/workspaces/" + workspace.id() + "/products", new TypeReference<List<ApiDtos.ProductView>>() {}).size());
         assertEquals(composition.metrics(), getJson("/api/workspaces/" + workspace.id() + "/products/" + product.productId() + "/metrics", ApiDtos.ProductCompositionMetrics.class));
+    }
+
+    @Test
+    void exposesScorecardSnapshotsAndHistoryWithoutChangingProduct() throws Exception {
+        WorkspaceResponse workspace = postJson("/api/workspaces", new CreateWorkspaceRequest("Scorecard Workspace", "architect"), WorkspaceResponse.class, HttpStatus.CREATED);
+        String base = "/api/workspaces/" + workspace.id() + "/products";
+        ApiDtos.ProductView product = postJson(base, new ApiDtos.CreateProductRequest("Mortgage", "", "architect"), ApiDtos.ProductView.class, HttpStatus.CREATED);
+        base += "/" + product.productId();
+        var finding = new ApiDtos.ProductArchitectureFindingView("finding-1", "RELEASE_LOCKSTEP", "RISK", "Release lockstep", "Explicit lockstep", "RELEASE_INDEPENDENCE", "HIGH", "HIGH", .9,
+                List.of(), List.of(), List.of("evidence-1"), List.of(), List.of(), List.of(), "explicit release metadata", List.of(), List.of(), 1, java.time.Instant.now());
+        var assessment = new ApiDtos.ProductDistributedMonolithAssessment("assessment-1", product.productId(), 1, "COMPLETED", "COUPLED", "HIGH", .9, 75,
+                List.of(), List.of(), List.of("finding-1"), List.of(), List.of(), java.time.Instant.now());
+        productStore.saveArchitectureAnalysis(workspace.id(), product.productId(), new ApiDtos.ProductArchitectureAnalysisView("analysis-1", product.productId(), workspace.id(), 1,
+                "COMPLETED", java.time.Instant.now(), java.time.Instant.now(), "correlation-1", List.of(finding), assessment, List.of()));
+        var first = postJson(base + "/scorecards", java.util.Map.of(), ApiDtos.ProductScorecardView.class, HttpStatus.OK);
+        var second = postJson(base + "/scorecards", java.util.Map.of(), ApiDtos.ProductScorecardView.class, HttpStatus.OK);
+        assertEquals(first.scorecardId(), second.previousScorecardId());
+        assertEquals(second, getJson(base + "/scorecards/latest", ApiDtos.ProductScorecardView.class));
+        assertEquals(first, getJson(base + "/scorecards/" + first.scorecardId(), ApiDtos.ProductScorecardView.class));
+        assertEquals(2, getList(base + "/scorecards", new TypeReference<List<ApiDtos.ProductScorecardView>>() {}).size());
+        assertEquals(product, getJson(base, ApiDtos.ProductView.class));
+    }
+
+    @Test
+    void completesProductRecommendationReviewAndGovernedGraphChangeLifecycle() throws Exception {
+        createSampleSpringProject(tempDir);
+        WorkspaceResponse workspace = postJson("/api/workspaces", new CreateWorkspaceRequest("North Star", "architect"), WorkspaceResponse.class, HttpStatus.CREATED);
+        ApiDtos.DiscoveryRunDetails customerRun = postJson("/api/workspaces/" + workspace.id() + "/discovery-runs",
+                new ApiDtos.RunLocalDiscoveryRequest(tempDir.toString(), "architect"), ApiDtos.DiscoveryRunDetails.class, HttpStatus.CREATED);
+        ApiDtos.DiscoveryRunDetails originationRun = postJson("/api/workspaces/" + workspace.id() + "/discovery-runs",
+                new ApiDtos.RunLocalDiscoveryRequest(tempDir.toString(), "architect"), ApiDtos.DiscoveryRunDetails.class, HttpStatus.CREATED);
+        String productsUrl = "/api/workspaces/" + workspace.id() + "/products";
+        ApiDtos.ProductView product = postJson(productsUrl, new ApiDtos.CreateProductRequest("Mortgage Origination", "", "architect"), ApiDtos.ProductView.class, HttpStatus.CREATED);
+        product = postJson(productsUrl + "/" + product.productId() + "/repositories",
+                new ApiDtos.AddProductRepositoryRequest("customer-api", tempDir.toString(), "SERVICE", List.of(customerRun.summary().runId()), java.util.Map.of(), java.util.Map.of("team", "customer"), "architect"),
+                ApiDtos.ProductView.class, HttpStatus.CREATED);
+        product = postJson(productsUrl + "/" + product.productId() + "/repositories",
+                new ApiDtos.AddProductRepositoryRequest("origination-service", tempDir.toString(), "SERVICE", List.of(originationRun.summary().runId()), java.util.Map.of(), java.util.Map.of("team", "origination"), "architect"),
+                ApiDtos.ProductView.class, HttpStatus.CREATED);
+        String productUrl = productsUrl + "/" + product.productId();
+        List<String> repositoryIds = product.repositories().stream().map(ApiDtos.ProductRepositoryView::repositoryId).toList();
+        var indicator = new ApiDtos.ProductArchitectureIndicatorView("indicator-cycle", "CROSS_REPOSITORY_CYCLE", "Explicit cycle", .9,
+                List.of("dependency-1"), List.of("evidence-cycle"), repositoryIds, List.of(), repositoryIds);
+        var finding = new ApiDtos.ProductArchitectureFindingView("finding-cycle", "CROSS_REPOSITORY_CYCLE", "RISK", "Cross repository cycle", "Cycle", "MODULARITY", "HIGH", "HIGH", .9,
+                List.of(indicator), List.of("observation-cycle"), List.of("evidence-cycle"), repositoryIds, List.of(), List.of(repositoryIds),
+                "deterministic dependency cycle", List.of(), List.of(), product.compositionVersion(), java.time.Instant.now());
+        var assessment = new ApiDtos.ProductDistributedMonolithAssessment("assessment-cycle", product.productId(), product.compositionVersion(), "COMPLETED", "COUPLED", "HIGH", .9, 80,
+                List.of(indicator), List.of(), List.of(finding.findingId()), List.of(), List.of(), java.time.Instant.now());
+        productStore.saveArchitectureAnalysis(workspace.id(), product.productId(), new ApiDtos.ProductArchitectureAnalysisView("analysis-north-star", product.productId(), workspace.id(), product.compositionVersion(),
+                "COMPLETED", java.time.Instant.now(), java.time.Instant.now(), "correlation-north-star", List.of(finding), assessment, List.of()));
+
+        ApiDtos.ProductRecommendationGenerationView generation = postJson(productUrl + "/recommendations/generate", java.util.Map.of(), ApiDtos.ProductRecommendationGenerationView.class, HttpStatus.OK);
+        String recommendationId = generation.recommendations().getFirst().recommendationId();
+        ApiDtos.ProductScorecardView scorecard = postJson(productUrl + "/scorecards", java.util.Map.of(), ApiDtos.ProductScorecardView.class, HttpStatus.OK);
+        GraphResponse graphBeforeReview = getJson("/api/workspaces/" + workspace.id() + "/graph", GraphResponse.class);
+
+        var participants = List.of(new ApiDtos.ReviewBoardParticipantRequest("architect", "Architect", "HUMAN_ARCHITECT"),
+                new ApiDtos.ReviewBoardParticipantRequest("ddd", "DDD Reviewer", "DDD_REVIEWER"));
+        ApiDtos.ProductReviewSnapshot submitted = postJson(productUrl + "/recommendations/" + recommendationId + "/submit-review",
+                new ApiDtos.SubmitProductReviewRequest("architect", "Review this option", participants), ApiDtos.ProductReviewSnapshot.class, HttpStatus.OK);
+        assertEquals("SUBMITTED", submitted.state());
+        assertEquals(repositoryIds, submitted.repositoryIds());
+        assertEquals(List.of(customerRun.summary().runId(), originationRun.summary().runId()), submitted.discoveryRunIds());
+        assertEquals(List.of("finding-cycle"), submitted.findingIds());
+        assertEquals(List.of("evidence-cycle"), submitted.evidenceIds());
+        postJson(productUrl + "/recommendations/" + recommendationId + "/review/votes",
+                new ApiDtos.RecordReviewBoardVoteRequest("architect", "APPROVE", "Evidence supports the option"), ApiDtos.ProductReviewSnapshot.class, HttpStatus.OK);
+        postJson(productUrl + "/recommendations/" + recommendationId + "/review/votes",
+                new ApiDtos.RecordReviewBoardVoteRequest("ddd", "APPROVE", "Boundary is appropriate"), ApiDtos.ProductReviewSnapshot.class, HttpStatus.OK);
+        ApiDtos.ProductReviewSnapshot approved = postJson(productUrl + "/recommendations/" + recommendationId + "/review/close",
+                new ApiDtos.CloseReviewBoardSessionRequest("architect"), ApiDtos.ProductReviewSnapshot.class, HttpStatus.OK);
+        assertEquals("APPROVED", approved.state());
+        assertEquals("ACCEPT_PROPOSED_CHANGE", approved.session().decision().decisionType());
+        assertEquals(graphBeforeReview, getJson("/api/workspaces/" + workspace.id() + "/graph", GraphResponse.class));
+        assertEquals(scorecard, getJson(productUrl + "/scorecards/" + scorecard.scorecardId(), ApiDtos.ProductScorecardView.class));
+
+        ApiDtos.ProposedChangeResponse proposed = postJson(productUrl + "/recommendations/" + recommendationId + "/create-proposed-change",
+                new ApiDtos.ProductProposedElementRequest("BOUNDED_CONTEXT", "Pricing Context", "Explicit product boundary", "architect", "Approved option"),
+                ApiDtos.ProposedChangeResponse.class, HttpStatus.OK);
+        assertEquals("PROPOSED", proposed.status());
+        assertEquals(recommendationId, proposed.recommendationId());
+        assertEquals(List.of("finding-cycle"), proposed.findingIds());
+        assertEquals(List.of("evidence-cycle"), proposed.evidenceIds());
+        assertEquals(product.productId(), proposed.mutation().get("attribute.productId"));
+        assertEquals("analysis-north-star", proposed.mutation().get("attribute.analysisId"));
+        assertEquals(String.join(",", repositoryIds), proposed.mutation().get("attribute.repositoryIds"));
+        assertEquals(graphBeforeReview, getJson("/api/workspaces/" + workspace.id() + "/graph", GraphResponse.class));
+
+        ApiDtos.ProposedChangeResponse accepted = postJson(productUrl + "/recommendations/" + recommendationId + "/proposed-change/accept",
+                new ApiDtos.DecideProposedChangeRequest(workspace.id(), "architect", "Explicit acceptance after Review Board approval"),
+                ApiDtos.ProposedChangeResponse.class, HttpStatus.OK);
+        assertEquals("ACCEPTED", accepted.status());
+        GraphResponse graphAfterAcceptance = getJson("/api/workspaces/" + workspace.id() + "/graph", GraphResponse.class);
+        assertEquals(graphBeforeReview.elements().size() + 1, graphAfterAcceptance.elements().size());
+        assertTrue(graphAfterAcceptance.elements().stream().anyMatch(e -> e.type().equals("BOUNDED_CONTEXT") && e.name().equals("Pricing Context")));
+        ApiDtos.ProductArchitectureRecommendationView completed = getJson(productUrl + "/recommendations/" + recommendationId, ApiDtos.ProductArchitectureRecommendationView.class);
+        assertEquals("ARCHITECTURE_CHANGE_ACCEPTED", completed.status());
+        List<ApiDtos.ProductReviewSnapshot> history = getList(productUrl + "/recommendations/" + recommendationId + "/review-history", new TypeReference<>() {});
+        assertEquals(6, history.size());
+        List<ApiDtos.ProductRecommendationLifecycleEvent> lifecycle = getList(productUrl + "/recommendations/" + recommendationId + "/lifecycle", new TypeReference<>() {});
+        assertEquals(List.of("SUBMITTED", "UNDER_REVIEW", "UNDER_REVIEW", "APPROVED", "PROPOSED_CHANGE", "ARCHITECTURE_CHANGE_ACCEPTED"), lifecycle.stream().map(ApiDtos.ProductRecommendationLifecycleEvent::status).toList());
+        List<String> actions = auditSink.entries().stream().map(e -> e.action()).toList();
+        assertTrue(actions.contains("ProductRecommendationSubmittedForReview"));
+        assertTrue(actions.contains("ReviewRequested"));
+        assertTrue(actions.contains("ReviewCompleted"));
+        assertTrue(actions.contains("ProductRecommendationReviewDecided"));
+        assertTrue(actions.contains("ProductRecommendationProposedChangeCreated"));
+        assertTrue(actions.contains("ProductRecommendationArchitectureChangeAccepted"));
+
+        ApiDtos.ProductRecommendationGenerationView rejectedGeneration = postJson(productUrl + "/recommendations/generate", java.util.Map.of(), ApiDtos.ProductRecommendationGenerationView.class, HttpStatus.OK);
+        String rejectedId = rejectedGeneration.recommendations().getFirst().recommendationId();
+        postJson(productUrl + "/recommendations/" + rejectedId + "/submit-review",
+                new ApiDtos.SubmitProductReviewRequest("architect", "Review alternative", participants), ApiDtos.ProductReviewSnapshot.class, HttpStatus.OK);
+        postJson(productUrl + "/recommendations/" + rejectedId + "/review/votes",
+                new ApiDtos.RecordReviewBoardVoteRequest("architect", "REJECT", "Do not change this boundary"), ApiDtos.ProductReviewSnapshot.class, HttpStatus.OK);
+        ApiDtos.ProductReviewSnapshot rejected = postJson(productUrl + "/recommendations/" + rejectedId + "/review/close",
+                new ApiDtos.CloseReviewBoardSessionRequest("architect"), ApiDtos.ProductReviewSnapshot.class, HttpStatus.OK);
+        assertEquals("REJECTED", rejected.state());
+        mvc.perform(post(productUrl + "/recommendations/" + rejectedId + "/create-proposed-change")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ApiDtos.ProductProposedElementRequest("BOUNDED_CONTEXT", "Rejected Context", "", "architect", ""))))
+                .andExpect(status().isBadRequest());
     }
 
     private <T> T getJson(String url, Class<T> responseType) throws Exception {

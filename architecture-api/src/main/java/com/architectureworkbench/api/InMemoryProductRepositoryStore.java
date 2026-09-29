@@ -2,7 +2,7 @@ package com.architectureworkbench.api;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 final class InMemoryProductRepositoryStore implements ProductRepositoryStore {
- private final Map<String,ProductModels.Product> products=new ConcurrentHashMap<>(); private final Map<String,ApiDtos.ProductCompositionView> compositions=new ConcurrentHashMap<>(); private final Map<String,List<ApiDtos.ProductDependencyCompositionView>> dependencies=new ConcurrentHashMap<>(); private final Map<String,List<ApiDtos.ProductArchitectureAnalysisView>> analyses=new ConcurrentHashMap<>(); private final Map<String,List<ApiDtos.ProductRecommendationGenerationView>> recommendations=new ConcurrentHashMap<>();
+ private final Map<String,ProductModels.Product> products=new ConcurrentHashMap<>(); private final Map<String,ApiDtos.ProductCompositionView> compositions=new ConcurrentHashMap<>(); private final Map<String,List<ApiDtos.ProductDependencyCompositionView>> dependencies=new ConcurrentHashMap<>(); private final Map<String,List<ApiDtos.ProductArchitectureAnalysisView>> analyses=new ConcurrentHashMap<>(); private final Map<String,List<ApiDtos.ProductRecommendationGenerationView>> recommendations=new ConcurrentHashMap<>(); private final Map<String,List<ApiDtos.ProductScorecardView>> scorecards=new ConcurrentHashMap<>(); private final Map<String,List<ApiDtos.ProductReviewSnapshot>> reviews=new ConcurrentHashMap<>(); private final Map<String,List<ApiDtos.ProductRecommendationLifecycleEvent>> lifecycle=new ConcurrentHashMap<>();
  private String key(String w,String p){return w+"/"+p;}
  public ProductModels.Product save(ProductModels.Product p){products.put(key(p.workspaceId(),p.id().value()),p);return p;}
  public Optional<ProductModels.Product> find(String w,String p){return Optional.ofNullable(products.get(key(w,p)));}
@@ -18,4 +18,10 @@ final class InMemoryProductRepositoryStore implements ProductRepositoryStore {
  public List<ApiDtos.ProductArchitectureAnalysisView> architectureAnalyses(String w,String p){return analyses.getOrDefault(key(w,p),List.of());}
  public void saveRecommendationGeneration(String w,String p,ApiDtos.ProductRecommendationGenerationView g){recommendations.compute(key(w,p),(k,v)->{var n=new ArrayList<>(v==null?List.<ApiDtos.ProductRecommendationGenerationView>of():v);n.removeIf(x->x.generationId().equals(g.generationId()));n.add(g);return List.copyOf(n);});}
  public List<ApiDtos.ProductRecommendationGenerationView> recommendationGenerations(String w,String p){return recommendations.getOrDefault(key(w,p),List.of());}
+ public void saveScorecard(String w,String p,ApiDtos.ProductScorecardView s){scorecards.compute(key(w,p),(k,v)->{var n=new ArrayList<>(v==null?List.<ApiDtos.ProductScorecardView>of():v);n.add(s);return List.copyOf(n);});}
+ public List<ApiDtos.ProductScorecardView> scorecards(String w,String p){return scorecards.getOrDefault(key(w,p),List.of());}
+ public void saveReviewSnapshot(String w,String p,ApiDtos.ProductReviewSnapshot s){reviews.compute(key(w,p),(k,v)->{var n=new ArrayList<>(v==null?List.<ApiDtos.ProductReviewSnapshot>of():v);n.add(s);return List.copyOf(n);});}
+ public List<ApiDtos.ProductReviewSnapshot> reviewSnapshots(String w,String p){return reviews.getOrDefault(key(w,p),List.of());}
+ public void saveRecommendationLifecycle(String w,String p,ApiDtos.ProductRecommendationLifecycleEvent e){lifecycle.compute(key(w,p),(k,v)->{var n=new ArrayList<>(v==null?List.<ApiDtos.ProductRecommendationLifecycleEvent>of():v);n.add(e);return List.copyOf(n);});}
+ public List<ApiDtos.ProductRecommendationLifecycleEvent> recommendationLifecycle(String w,String p){return lifecycle.getOrDefault(key(w,p),List.of());}
 }

@@ -32,7 +32,9 @@ Counter-evidence reduces confidence and urgency. Incomplete evidence yields a fu
 
 Deterministic keys link recurring candidates across analysis runs. Exact scope matches increment recurrence and link the previous recommendation. Generations and lifecycle references are stored under the Product directory and covered by workspace integrity manifests.
 
-Submission creates an explicit Review Board reference and changes status to `UNDER_REVIEW`. Creating a proposed change is also explicit and records intent. Neither operation mutates Product composition or the canonical graph; existing acceptance governance remains mandatory.
+Submission creates an actual Review Board session through the existing Review Board workflow and changes status from `CANDIDATE` to `SUBMITTED`. Voting changes it to `UNDER_REVIEW`; closing the session records `APPROVED`, `REJECTED`, `DEFERRED`, or a continuing review state. Review snapshots and recommendation lifecycle events are append-only Product history and retain analysis, repository, discovery-run, finding, and evidence references.
+
+Only an approved recommendation may be adapted into an actual `ProposedArchitectureChange`. The user supplies the concrete graph element mutation; proposal creation changes recommendation status to `PROPOSED_CHANGE` but does not mutate the graph. A separate explicit acceptance command applies the mutation and records `ARCHITECTURE_CHANGE_ACCEPTED`. This adapter uses the existing Architecture Intelligence Model, Review Board, and proposed-change concepts rather than defining parallel governance models.
 
 ## Limitations
 

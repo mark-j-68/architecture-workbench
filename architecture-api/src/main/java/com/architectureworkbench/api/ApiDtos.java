@@ -242,6 +242,14 @@ public final class ApiDtos {
                                                    ProductDistributedMonolithAssessment assessment,
                                                    List<ProductArchitectureAnalysisDiagnostic> diagnostics) {}
 
+    public record ProductScoreMetricView(String metric,String label,int weight,Integer score,double confidence,
+                                         List<String> findingIds,List<String> evidenceIds,List<String> recommendationIds,
+                                         List<String> reviewStatuses,String explanation,String trend) {}
+    public record ProductScorecardView(String scorecardId,String productId,String workspaceId,String analysisId,
+                                       long compositionVersion,Instant generatedAt,Integer overallScore,double overallConfidence,
+                                       int measuredWeight,int evidenceCoverage,String status,String previousScorecardId,
+                                       String trend,List<ProductScoreMetricView> metrics,List<String> limitations) {}
+
     public record RecommendationTradeoffView(String benefit,String cost,String risk) {}
     public record RecommendationAlternativeView(String alternativeId,String title,String description,String impact,String effort,
                                                   String deliveryRisk,String operationalRisk,List<String> prerequisites,
@@ -262,6 +270,15 @@ public final class ApiDtos {
     public record RecommendationActionRequest(String actorRef,String rationale) {}
     public record RecommendationProposedChangeView(String proposedChangeId,String recommendationId,String status,String boundary,
                                                     List<String> findingIds,List<String> evidenceIds,Instant createdAt) {}
+    public record SubmitProductReviewRequest(String actorRef,String rationale,List<ReviewBoardParticipantRequest> participants) {}
+    public record ProductProposedElementRequest(String elementType,String name,String description,String actorRef,String rationale) {}
+    public record ProductReviewSnapshot(String snapshotId,String workspaceId,String productId,String recommendationId,
+                                        String analysisId,long compositionVersion,List<String> repositoryIds,
+                                        List<String> discoveryRunIds,List<String> findingIds,List<String> evidenceIds,
+                                        String state,ReviewBoardSessionResponse session,String proposedChangeId,Instant recordedAt) {}
+    public record ProductRecommendationLifecycleEvent(String eventId,String recommendationId,String status,
+                                                      String reviewSessionId,String proposedChangeId,String actorRef,
+                                                      String rationale,Instant recordedAt) {}
 
     public record FindingResponse(
             String id,

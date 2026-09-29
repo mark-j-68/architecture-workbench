@@ -16,4 +16,10 @@ interface ProductRepositoryStore {
     List<ApiDtos.ProductArchitectureAnalysisView> architectureAnalyses(String workspaceId,String productId);
     void saveRecommendationGeneration(String workspaceId,String productId,ApiDtos.ProductRecommendationGenerationView generation);
     List<ApiDtos.ProductRecommendationGenerationView> recommendationGenerations(String workspaceId,String productId);
+    void saveScorecard(String workspaceId,String productId,ApiDtos.ProductScorecardView scorecard);
+    List<ApiDtos.ProductScorecardView> scorecards(String workspaceId,String productId);
+    void saveReviewSnapshot(String workspaceId,String productId,ApiDtos.ProductReviewSnapshot snapshot);
+    List<ApiDtos.ProductReviewSnapshot> reviewSnapshots(String workspaceId,String productId);
+    void saveRecommendationLifecycle(String workspaceId,String productId,ApiDtos.ProductRecommendationLifecycleEvent event);
+    List<ApiDtos.ProductRecommendationLifecycleEvent> recommendationLifecycle(String workspaceId,String productId);
 }

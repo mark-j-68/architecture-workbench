@@ -11,7 +11,7 @@ The demo length is 20 minutes.
 
 "Architecture Workbench now understands a product, not just a repository. We
 can attach several repositories, discover how the product is actually built,
-infer modules and bounded contexts, detect contracts and release dependencies,
+define Product Modules, identify bounded-context candidates, detect contracts and release dependencies,
 score architecture health, identify distributed monolith risk, and govern a
 recommended change through the Review Board."
 
@@ -63,10 +63,10 @@ canonical architecture boundary."
 
 Action:
 
-- attach `customer-api`
-- attach `origination-service`
-- attach `pricing-service`
-- attach `shared-domain-model`
+- use **Discover and add** for `customer-api`
+- use **Discover and add** for `origination-service`
+- use **Discover and add** for `pricing-service`
+- use **Discover and add** for `shared-domain-model`
 
 Expected state:
 
@@ -82,7 +82,8 @@ all of them together."
 
 Action:
 
-- run product discovery
+- inspect the four retained discovery runs attached by **Discover and add**
+- compose Product evidence, then compose cross-repository dependencies
 
 Expected discoveries:
 
@@ -98,19 +99,21 @@ Expected discoveries:
 
 Narration:
 
-"Discovery creates evidence first, then observations, findings, recommendations,
-and proposed architecture changes."
+"Discovery creates evidence first. Product composition and deterministic analysis
+then produce observations, findings, and recommendation options. Proposed
+architecture changes remain a later governed action."
 
-### 7:00-9:00 - Infer Product Modules And Bounded Contexts
+### 7:00-9:00 - Define Product Modules And Review Bounded Context Candidates
 
-Expected inferred product modules:
+Explicit Product Modules used for the demo:
 
 - Customer Intake
 - Origination
 - Pricing
 - Shared Model
 
-Expected bounded context candidates:
+Bounded-context candidates discussed from the evidence and later available as
+explicit governed proposals:
 
 - Customer Context
 - Loan Application Context
@@ -222,15 +225,21 @@ graph automatically."
 
 Action:
 
-- open Review Board for recommendation: "replace shared domain model dependency
-  with versioned contracts"
+- submit recommendation: "replace shared domain model dependency with versioned
+  contracts"
+- the Workbench opens a persisted Review Board session with the recommendation,
+  findings, evidence, analysis, repository, discovery-run, Product, and workspace
+  references
 - record architect and DDD reviewer votes
 - close session
+- inspect the explicit `Approved` recommendation state
+- choose a concrete graph element type and name, then create the proposed change
 - explicitly accept one proposed change
 
 Expected state:
 
 - Review Board decision recommends acceptance
+- proposal creation remains a separate explicit action
 - accepted proposed change updates product graph
 - graph mutation is explicit and audited
 
@@ -238,6 +247,22 @@ Narration:
 
 "Governance remains in the loop. The Review Board recommends; explicit
 acceptance mutates the graph."
+
+API sequence used by the UI:
+
+```text
+POST .../recommendations/{id}/submit-review
+POST .../recommendations/{id}/review/votes
+POST .../recommendations/{id}/review/close
+POST .../recommendations/{id}/create-proposed-change
+POST .../recommendations/{id}/proposed-change/accept
+```
+
+The UI shows Candidate, Submitted, Under Review, Approved or Rejected,
+Proposed Change, and Architecture Change Accepted as distinct states. Review
+history and recommendation lifecycle history remain available after each
+transition. Scorecard generation may occur before or after review and does not
+cast a vote or determine the Review Board result.
 
 ### 19:00-20:00 - View Updated Product Architecture
 
@@ -266,3 +291,13 @@ The demo succeeds if viewers understand:
 - Recommendations are governed before graph mutation.
 - Product architecture can support both brownfield discovery and greenfield
   design.
+
+## Implemented Release 0.3 Boundaries
+
+The demo uses explicit Product Modules; Release 0.3 does not infer semantic
+bounded contexts from names. The final governed proposal can add a bounded
+context candidate to the canonical graph only after Review Board approval and
+explicit proposal acceptance. Multi-repository discovery is composed from the
+retained discovery run attached to each Product repository. Remote repository
+providers, runtime telemetry, live AI reviewers, and automatic remediation are
+outside Release 0.3.
