@@ -34,7 +34,7 @@ The current local stack is intentionally minimal:
   changes, Review Board workflow, thin API/UI shells, and local persistence.
 - `v0.2 Discovery Foundations`: pluggable deterministic discovery, evidence
   collection, provenance, confidence, and structural observations.
-- `v0.3 Multi-Repo Product Architecture Intelligence`: product-centric
+- [`v0.3 Multi-Repo Product Architecture Intelligence`](architecture/reference/RELEASE-NOTES-0.3.md): product-centric
   interpretation across repositories, deployables, bounded contexts, release
   streams, contracts, ownership, and distributed monolith risk.
 - `v0.4 AI Review Board`: provider-neutral reviewer plugins, live model

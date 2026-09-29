@@ -16,4 +16,4 @@ Recommendation generation, Review Board submission, status changes, and recommen
 
 ## Consequences
 
-Users can compare options and inspect their evidence before deciding. Recommendation history remains stable across repeated analyses through deterministic identity rules. The Workbench may appear less prescriptive, but its advice is more transparent and safer. Product Architecture Score, autonomous remediation, and semantic bounded-context inference remain out of scope.
+Users can compare options and inspect their evidence before deciding. Recommendation history remains stable across repeated analyses through deterministic identity rules. The Workbench may appear less prescriptive, but its advice is more transparent and safer. Release 0.3.5 later added the read-only Product Architecture Scorecard under ADR-045 without changing these governance semantics. Autonomous remediation and semantic bounded-context inference remain out of scope.
