@@ -34,17 +34,20 @@ The current local stack is intentionally minimal:
   changes, Review Board workflow, thin API/UI shells, and local persistence.
 - `v0.2 Discovery Foundations`: pluggable deterministic discovery, evidence
   collection, provenance, confidence, and structural observations.
-- [`v0.3 Multi-Repo Product Architecture Intelligence`](architecture/reference/RELEASE-NOTES-0.3.md): product-centric
+- [`v0.3 Product Architecture Intelligence`](architecture/reference/RELEASE-NOTES-0.3.md) — **complete**: product-centric
   interpretation across repositories, deployables, bounded contexts, release
   streams, contracts, ownership, and distributed monolith risk.
-- `v0.4 AI Review Board`: provider-neutral reviewer plugins, live model
-  adapters, consensus workflows, and governed AI-assisted review.
-- `v0.5 Continuous Architecture`: repository and pipeline integration,
-  recurring healthchecks, drift detection, and architecture change monitoring.
-- `v0.6 Provider Ecosystem`: extensible provider marketplace for AI models,
-  scanners, generators, projections, and enterprise integrations.
-- `v0.7 Enterprise Portfolio Intelligence`: portfolio-level product comparison,
-  investment signals, duplicate capability detection, and enterprise risk.
+- [`v0.4 Architecture Semantics and Drift Intelligence`](architecture/reference/RELEASE-0.4-ARCHITECTURE-SEMANTICS-AND-DRIFT.md): deterministic semantic candidates, observed versus intended architecture, immutable snapshots, and evidence-backed drift.
+- `v0.5 Multi-Agent Architecture Review`: provider-neutral specialist review,
+  retained disagreement, consensus workflows, and human-governed decisions.
+- `v0.6 Architectural Memory`: governed retrieval of prior architecture context,
+  patterns, decisions, and evidence.
+- `v0.7 Outcome and Decision Intelligence`: connect architecture decisions to
+  experiments, outcomes, learning, and reusable guidance.
+- `v0.8 Real-World Discovery and Continuous Architecture`: remote repository and
+  delivery integration, recurring analysis, and continuous drift monitoring.
+- `v0.9 Platformisation and Governance`: multi-user operation, authorization,
+  policy administration, persistence hardening, and enterprise controls.
 - `v1.0 Architecture Intelligence Platform`: governed architecture operating
   system for discovery, design, review, generation, portfolio intelligence, and
   provider ecosystems.

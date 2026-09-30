@@ -1,4 +1,28 @@
-# Architecture Workbench Roadmap — AI-Native Platform
+# Architecture Workbench Roadmap
+
+## Current release roadmap
+
+| Release | Theme | Status |
+|---|---|---|
+| v0.1 | Foundation | Complete |
+| v0.2 | Discovery Foundations | Complete |
+| v0.3 | Product Architecture Intelligence | Complete |
+| v0.4 | Architecture Semantics and Drift Intelligence | Designed |
+| v0.5 | Multi-Agent Architecture Review | Planned |
+| v0.6 | Architectural Memory | Planned |
+| v0.7 | Outcome and Decision Intelligence | Planned |
+| v0.8 | Real-World Discovery and Continuous Architecture | Planned |
+| v0.9 | Platformisation and Governance | Planned |
+| v1.0 | Architecture Intelligence Platform | Planned |
+
+Release details:
+
+- [Release 0.3 Product Architecture Intelligence](../reference/RELEASE-0.3-MULTI-REPO-PRODUCT-ARCHITECTURE.md)
+- [Release 0.4 Architecture Semantics and Drift Intelligence](../reference/RELEASE-0.4-ARCHITECTURE-SEMANTICS-AND-DRIFT.md)
+
+The M1–M10 plan below is the earlier implementation roadmap. It remains useful as architectural history and as a capability inventory. Its milestone numbering does not define the current release sequence; several items were deliberately delivered, narrowed, or deferred through the v0.1–v0.3 release plans.
+
+## Earlier M1–M10 implementation roadmap
 
 ## M1 — Architecture Foundation
 
